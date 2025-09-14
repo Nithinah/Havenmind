@@ -1,0 +1,23 @@
+# https://www.robotstxt.org/robotstxt.html
+User-agent: *
+Disallow: /api/
+Disallow: /private/
+Disallow: *.json
+Allow: /
+
+# Sitemap location
+Sitemap: https://havenmind.app/sitemap.xml
+
+# Allow wellness and health-focused crawlers
+User-agent: HealthBot
+Allow: /
+
+# Block aggressive crawlers to protect user privacy
+User-agent: AhrefsBot
+Disallow: /
+
+User-agent: MJ12bot
+Disallow: /
+
+# Crawl-delay for respectful indexing
+Crawl-delay: 1

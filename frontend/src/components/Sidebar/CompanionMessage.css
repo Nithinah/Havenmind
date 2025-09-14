@@ -1,0 +1,363 @@
+/* CompanionMessage.css */
+
+.companion-message {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  padding: 16px;
+  background: rgba(99, 102, 241, 0.05);
+  border: 1px solid rgba(99, 102, 241, 0.1);
+  border-radius: 12px;
+  position: relative;
+}
+
+.companion-message.loading {
+  background: rgba(99, 102, 241, 0.03);
+  border-color: rgba(99, 102, 241, 0.05);
+}
+
+.companion-message.empty {
+  background: rgba(107, 114, 128, 0.05);
+  border-color: rgba(107, 114, 128, 0.1);
+}
+
+.companion-message.active {
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.08) 0%, rgba(139, 92, 246, 0.06) 100%);
+  border-color: rgba(99, 102, 241, 0.2);
+  box-shadow: 0 2px 8px rgba(99, 102, 241, 0.1);
+}
+
+/* Avatar */
+.companion-avatar {
+  flex-shrink: 0;
+}
+
+.avatar-icon {
+  width: 36px;
+  height: 36px;
+  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  box-shadow: 0 2px 8px rgba(99, 102, 241, 0.3);
+}
+
+.avatar-icon.loading-pulse {
+  background: linear-gradient(135deg, #9ca3af 0%, #6b7280 100%);
+  animation: pulse-gentle 2s ease-in-out infinite;
+}
+
+@keyframes pulse-gentle {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.05);
+    opacity: 0.8;
+  }
+}
+
+.spin {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* Message Content */
+.message-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.message-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.companion-name {
+  font-weight: 600;
+  font-size: 14px;
+  color: #6366f1;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.companion-name::after {
+  content: '✨';
+  font-size: 12px;
+  opacity: 0.7;
+}
+
+.message-status {
+  font-size: 12px;
+  color: #9ca3af;
+  font-style: italic;
+}
+
+.message-timestamp {
+  font-size: 11px;
+  color: #9ca3af;
+  font-weight: 400;
+}
+
+/* Message Text */
+.message-text {
+  margin-bottom: 12px;
+}
+
+.message-text p {
+  font-size: 14px;
+  line-height: 1.5;
+  color: #374151;
+  margin: 0;
+  word-wrap: break-word;
+}
+
+.typing-cursor {
+  color: #6366f1;
+  font-weight: bold;
+  margin-left: 1px;
+}
+
+.expand-button {
+  background: none;
+  border: none;
+  color: #6366f1;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  margin-top: 4px;
+  padding: 2px 4px;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+}
+
+.expand-button:hover {
+  background: rgba(99, 102, 241, 0.1);
+  text-decoration: underline;
+}
+
+/* Typing Indicator */
+.typing-indicator {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.typing-dots {
+  display: flex;
+  gap: 4px;
+}
+
+.typing-dots span {
+  width: 6px;
+  height: 6px;
+  background: #9ca3af;
+  border-radius: 50%;
+  animation: typing-bounce 1.4s ease-in-out infinite both;
+}
+
+.typing-dots span:nth-child(1) { animation-delay: -0.32s; }
+.typing-dots span:nth-child(2) { animation-delay: -0.16s; }
+
+@keyframes typing-bounce {
+  0%, 80%, 100% {
+    transform: scale(0);
+    opacity: 0.5;
+  }
+  40% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+/* Message Footer */
+.message-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid rgba(99, 102, 241, 0.1);
+}
+
+.message-actions {
+  display: flex;
+  gap: 4px;
+}
+
+.action-button {
+  background: none;
+  border: none;
+  color: #9ca3af;
+  padding: 4px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.action-button:hover {
+  background: rgba(99, 102, 241, 0.1);
+  color: #6366f1;
+}
+
+.companion-signature {
+  font-size: 11px;
+  color: #9ca3af;
+  font-style: italic;
+  opacity: 0.8;
+}
+
+/* Empty State */
+.empty-message p {
+  font-size: 13px;
+  color: #6b7280;
+  line-height: 1.4;
+  margin-bottom: 12px;
+}
+
+.empty-hint {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: #9ca3af;
+  background: rgba(107, 114, 128, 0.1);
+  padding: 8px 10px;
+  border-radius: 6px;
+  border: 1px solid rgba(107, 114, 128, 0.2);
+}
+
+.empty-hint span {
+  font-weight: 500;
+}
+
+/* Responsive Design */
+@media (max-width: 480px) {
+  .companion-message {
+    padding: 12px;
+    gap: 10px;
+  }
+
+  .avatar-icon {
+    width: 32px;
+    height: 32px;
+  }
+
+  .message-text p {
+    font-size: 13px;
+  }
+
+  .companion-name {
+    font-size: 13px;
+  }
+
+  .message-timestamp {
+    font-size: 10px;
+  }
+
+  .message-footer {
+    flex-direction: column;
+    gap: 8px;
+    align-items: flex-start;
+  }
+
+  .action-button {
+    padding: 6px;
+  }
+}
+
+/* High contrast mode */
+@media (prefers-contrast: high) {
+  .companion-message.active {
+    background: #ffffff;
+    border: 2px solid #6366f1;
+  }
+
+  .avatar-icon {
+    background: #6366f1;
+    border: 2px solid #ffffff;
+  }
+
+  .message-text p {
+    color: #000000;
+  }
+
+  .companion-name {
+    color: #6366f1;
+  }
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .avatar-icon.loading-pulse,
+  .typing-dots span,
+  .spin {
+    animation: none;
+  }
+
+  .action-button:hover,
+  .expand-button:hover {
+    transform: none;
+  }
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+  .companion-message.active {
+    background: rgba(99, 102, 241, 0.1);
+    border-color: rgba(99, 102, 241, 0.3);
+  }
+
+  .message-text p {
+    color: #e5e7eb;
+  }
+
+  .companion-signature,
+  .message-timestamp,
+  .message-status {
+    color: #9ca3af;
+  }
+}
+
+/* Focus states for accessibility */
+.expand-button:focus,
+.action-button:focus {
+  outline: 2px solid #6366f1;
+  outline-offset: 2px;
+}
+
+/* Print styles */
+@media print {
+  .companion-message {
+    background: white !important;
+    border: 1px solid black !important;
+    box-shadow: none !important;
+  }
+
+  .avatar-icon {
+    background: #6366f1 !important;
+  }
+
+  .message-actions,
+  .typing-indicator {
+    display: none !important;
+  }
+
+  .message-text p {
+    color: black !important;
+  }
+}

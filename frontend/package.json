@@ -1,0 +1,51 @@
+{
+  "name": "havenmind-frontend",
+  "version": "1.0.0",
+  "description": "HavenMind - Therapeutic sanctuary application with AI-powered emotional support",
+  "private": true,
+  "dependencies": {
+    "@testing-library/jest-dom": "^5.17.0",
+    "@testing-library/react": "^13.4.0",
+    "@testing-library/user-event": "^14.5.2",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "react-scripts": "5.0.1",
+    "three": "^0.158.0",
+    "@react-three/fiber": "^8.15.12",
+    "@react-three/drei": "^9.88.17",
+    "axios": "^1.6.0",
+    "framer-motion": "^10.16.4",
+    "lucide-react": "^0.294.0",
+    "react-router-dom": "^6.18.0",
+    "react-hot-toast": "^2.4.1",
+    "react-markdown": "^9.0.1",
+    "react-syntax-highlighter": "^15.5.0",
+    "canvas-confetti": "^1.9.2",
+    "web-vitals": "^2.1.4"
+  },
+  "scripts": {
+    "start": "react-scripts start",
+    "build": "react-scripts build",
+    "test": "react-scripts test",
+    "eject": "react-scripts eject"
+  },
+  "eslintConfig": {
+    "extends": [
+      "react-app",
+      "react-app/jest"
+    ]
+  },
+  "browserslist": {
+    "production": [
+      ">0.2%",
+      "not dead",
+      "not op_mini all"
+    ],
+    "development": [
+      "last 1 chrome version",
+      "last 1 firefox version",
+      "last 1 safari version"
+    ]
+  },
+  "proxy": "http://localhost:8000"
+}

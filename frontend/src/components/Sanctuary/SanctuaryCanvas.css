@@ -1,0 +1,291 @@
+/* SanctuaryCanvas.css */
+
+.sanctuary-canvas-container {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  min-height: 600px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.sanctuary-canvas {
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
+  max-width: 100%;
+  max-height: 100%;
+}
+
+.sanctuary-canvas:hover {
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
+}
+
+/* Loading State */
+.canvas-loading {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  color: rgba(255, 255, 255, 0.8);
+  text-align: center;
+}
+
+.loading-pulse {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.2);
+  animation: pulse-glow 2s ease-in-out infinite;
+}
+
+@keyframes pulse-glow {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 0.6;
+    box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.4);
+  }
+  50% {
+    transform: scale(1.1);
+    opacity: 1;
+    box-shadow: 0 0 0 20px rgba(255, 255, 255, 0);
+  }
+}
+
+.canvas-loading p {
+  font-size: 16px;
+  font-weight: 500;
+  margin: 0;
+}
+
+/* Empty State */
+.canvas-empty {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: rgba(255, 255, 255, 0.7);
+  text-align: center;
+  max-width: 400px;
+  padding: 40px;
+}
+
+.empty-message h3 {
+  font-size: 24px;
+  font-weight: 600;
+  margin-bottom: 12px;
+  font-family: 'Playfair Display', serif;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.empty-message p {
+  font-size: 16px;
+  line-height: 1.5;
+  opacity: 0.8;
+  margin: 0;
+}
+
+/* Element Tooltip */
+.element-tooltip {
+  position: absolute;
+  background: rgba(0, 0, 0, 0.9);
+  color: white;
+  border-radius: 8px;
+  padding: 12px;
+  pointer-events: none;
+  z-index: 1000;
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+  max-width: 200px;
+}
+
+.tooltip-content {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.tooltip-content strong {
+  font-size: 14px;
+  font-weight: 600;
+  text-transform: capitalize;
+}
+
+.tooltip-emotion {
+  font-size: 12px;
+  font-weight: 500;
+  text-transform: capitalize;
+  opacity: 0.9;
+}
+
+.tooltip-date {
+  font-size: 11px;
+  opacity: 0.7;
+  font-weight: 400;
+}
+
+/* Interactive States */
+.sanctuary-canvas[style*="pointer"] {
+  cursor: pointer !important;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .sanctuary-canvas-container {
+    min-height: 400px;
+  }
+
+  .sanctuary-canvas {
+    border-radius: 8px;
+  }
+
+  .canvas-loading {
+    padding: 20px;
+  }
+
+  .loading-pulse {
+    width: 50px;
+    height: 50px;
+  }
+
+  .canvas-loading p {
+    font-size: 14px;
+  }
+
+  .empty-message {
+    padding: 30px 20px;
+  }
+
+  .empty-message h3 {
+    font-size: 20px;
+  }
+
+  .empty-message p {
+    font-size: 14px;
+  }
+
+  .element-tooltip {
+    padding: 8px;
+    max-width: 150px;
+  }
+
+  .tooltip-content strong {
+    font-size: 12px;
+  }
+
+  .tooltip-emotion {
+    font-size: 11px;
+  }
+
+  .tooltip-date {
+    font-size: 10px;
+  }
+}
+
+@media (max-width: 480px) {
+  .sanctuary-canvas-container {
+    min-height: 300px;
+  }
+
+  .canvas-empty {
+    padding: 20px;
+  }
+
+  .empty-message h3 {
+    font-size: 18px;
+  }
+
+  .empty-message p {
+    font-size: 13px;
+  }
+
+  .element-tooltip {
+    font-size: 11px;
+    padding: 6px;
+  }
+}
+
+/* Performance optimizations */
+.sanctuary-canvas {
+  will-change: transform;
+}
+
+/* High contrast mode */
+@media (prefers-contrast: high) {
+  .sanctuary-canvas {
+    background: #000000;
+    border: 2px solid #ffffff;
+  }
+
+  .element-tooltip {
+    background: #ffffff;
+    color: #000000;
+    border: 2px solid #000000;
+  }
+
+  .canvas-loading {
+    color: #ffffff;
+  }
+
+  .loading-pulse {
+    background: #ffffff;
+  }
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .loading-pulse {
+    animation: none;
+    opacity: 0.8;
+  }
+
+  .sanctuary-canvas {
+    transition: none;
+  }
+}
+
+/* Print styles */
+@media print {
+  .sanctuary-canvas-container {
+    background: white !important;
+  }
+
+  .sanctuary-canvas {
+    border: 1px solid #000000 !important;
+    background: white !important;
+    box-shadow: none !important;
+  }
+
+  .canvas-loading,
+  .element-tooltip {
+    display: none !important;
+  }
+}
+
+/* Focus states for accessibility */
+.sanctuary-canvas:focus {
+  outline: 2px solid #ffffff;
+  outline-offset: 4px;
+}
+
+/* Dark mode adjustments */
+@media (prefers-color-scheme: dark) {
+  .sanctuary-canvas {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+  }
+
+  .element-tooltip {
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+  }
+}

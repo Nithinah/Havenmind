@@ -1,0 +1,392 @@
+/* App.css - Main application styles */
+
+.app {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  font-family: 'Inter', sans-serif;
+}
+
+.app-layout {
+  display: flex;
+  min-height: 100vh;
+  transition: all 0.3s ease;
+}
+
+/* Sidebar Styles */
+.app-sidebar {
+  width: 380px;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(20px);
+  border-right: 1px solid rgba(255, 255, 255, 0.2);
+  transition: all 0.3s ease;
+  overflow: hidden;
+  z-index: 1000;
+}
+
+.app-layout.sidebar-collapsed .app-sidebar {
+  width: 80px;
+}
+
+/* Main Content Styles */
+.app-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  position: relative;
+}
+
+.view-container {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Mobile Navigation */
+.mobile-nav {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(20px);
+  border-top: 1px solid rgba(255, 255, 255, 0.2);
+  display: flex;
+  justify-content: space-around;
+  padding: 12px 0;
+  z-index: 1000;
+  display: none;
+}
+
+.mobile-nav .nav-item {
+  background: none;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-size: 14px;
+  font-weight: 500;
+  color: #64748b;
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.mobile-nav .nav-item.active {
+  background: #6366f1;
+  color: white;
+  box-shadow: 0 2px 10px rgba(99, 102, 241, 0.3);
+}
+
+.mobile-nav .nav-item:hover:not(.active) {
+  background: rgba(99, 102, 241, 0.1);
+  color: #6366f1;
+}
+
+/* Keyboard Shortcuts Help */
+.keyboard-shortcuts {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  z-index: 100;
+}
+
+.keyboard-shortcuts details {
+  background: rgba(0, 0, 0, 0.8);
+  color: white;
+  border-radius: 8px;
+  padding: 8px;
+  font-size: 12px;
+  backdrop-filter: blur(10px);
+}
+
+.keyboard-shortcuts summary {
+  cursor: pointer;
+  padding: 4px 8px;
+  user-select: none;
+  font-weight: 500;
+}
+
+.keyboard-shortcuts summary:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+}
+
+.shortcuts-list {
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.shortcuts-list div {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 2px 0;
+  min-width: 180px;
+}
+
+.shortcuts-list kbd {
+  background: rgba(255, 255, 255, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 3px;
+  padding: 2px 6px;
+  font-size: 10px;
+  font-family: 'SF Mono', monospace;
+}
+
+/* Error Boundary Styles */
+.app-error {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  padding: 20px;
+  text-align: center;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+}
+
+.app-error h1 {
+  font-size: 2rem;
+  margin-bottom: 1rem;
+  font-weight: 600;
+}
+
+.app-error p {
+  font-size: 1.1rem;
+  margin-bottom: 2rem;
+  opacity: 0.9;
+  max-width: 500px;
+  line-height: 1.6;
+}
+
+.app-error button {
+  background: white;
+  color: #6366f1;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.app-error button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+}
+
+/* Loading States */
+.app-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+/* Responsive Design */
+@media (max-width: 1024px) {
+  .app-sidebar {
+    width: 320px;
+  }
+}
+
+@media (max-width: 768px) {
+  .app-layout {
+    flex-direction: column;
+  }
+  
+  .app-sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 100vh;
+    width: 100%;
+    transform: translateX(-100%);
+    transition: transform 0.3s ease;
+    z-index: 1001;
+  }
+  
+  .app-sidebar.open {
+    transform: translateX(0);
+  }
+  
+  .app-layout.sidebar-collapsed .app-sidebar {
+    width: 100%;
+  }
+  
+  .app-main {
+    padding-bottom: 80px; /* Space for mobile nav */
+  }
+  
+  .mobile-nav {
+    display: flex;
+  }
+  
+  .keyboard-shortcuts {
+    display: none;
+  }
+}
+
+@media (max-width: 480px) {
+  .app-sidebar {
+    width: 100vw;
+  }
+  
+  .mobile-nav .nav-item {
+    font-size: 12px;
+    padding: 6px 12px;
+  }
+  
+  .view-container {
+    padding: 10px;
+  }
+}
+
+/* High contrast mode */
+@media (prefers-contrast: high) {
+  .app {
+    background: #ffffff;
+    color: #000000;
+  }
+  
+  .app-sidebar {
+    background: #ffffff;
+    border-right: 2px solid #000000;
+  }
+  
+  .mobile-nav {
+    background: #ffffff;
+    border-top: 2px solid #000000;
+  }
+  
+  .mobile-nav .nav-item.active {
+    background: #000000;
+    color: #ffffff;
+  }
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .app-layout,
+  .app-sidebar,
+  .mobile-nav .nav-item,
+  .app-error button,
+  * {
+    transition: none !important;
+    animation: none !important;
+  }
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+  .app {
+    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+  }
+  
+  .app-sidebar {
+    background: rgba(30, 30, 30, 0.95);
+    border-right: 1px solid rgba(255, 255, 255, 0.1);
+  }
+  
+  .mobile-nav {
+    background: rgba(30, 30, 30, 0.95);
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+  }
+  
+  .keyboard-shortcuts details {
+    background: rgba(255, 255, 255, 0.1);
+  }
+}
+
+/* Print styles */
+@media print {
+  .app {
+    background: white !important;
+  }
+  
+  .app-sidebar,
+  .mobile-nav,
+  .keyboard-shortcuts {
+    display: none !important;
+  }
+  
+  .app-main {
+    padding: 0 !important;
+  }
+  
+  .view-container {
+    box-shadow: none !important;
+    border: none !important;
+    background: white !important;
+  }
+}
+
+/* Focus states for accessibility */
+.app-sidebar:focus-within {
+  box-shadow: 0 0 0 2px #6366f1;
+}
+
+.mobile-nav .nav-item:focus {
+  outline: 2px solid #6366f1;
+  outline-offset: 2px;
+}
+
+/* Animation classes */
+.fade-enter {
+  opacity: 0;
+}
+
+.fade-enter-active {
+  opacity: 1;
+  transition: opacity 300ms ease-in;
+}
+
+.fade-exit {
+  opacity: 1;
+}
+
+.fade-exit-active {
+  opacity: 0;
+  transition: opacity 300ms ease-out;
+}
+
+.slide-enter {
+  transform: translateX(-100%);
+}
+
+.slide-enter-active {
+  transform: translateX(0);
+  transition: transform 300ms ease-out;
+}
+
+.slide-exit {
+  transform: translateX(0);
+}
+
+.slide-exit-active {
+  transform: translateX(-100%);
+  transition: transform 300ms ease-in;
+}
+
+/* Custom scrollbar for webkit browsers */
+.app-main::-webkit-scrollbar {
+  width: 8px;
+}
+
+.app-main::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.app-main::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.3);
+  border-radius: 4px;
+}
+
+.app-main::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.5);
+}

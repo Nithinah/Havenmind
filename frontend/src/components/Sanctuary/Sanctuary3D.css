@@ -1,0 +1,424 @@
+/* Sanctuary3D.css */
+
+.sanctuary-3d-container {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(135deg, #0f0f23 0%, #1a1a2e 100%);
+  overflow: hidden;
+  border-radius: 12px;
+}
+
+.canvas-3d-wrapper {
+  width: 100%;
+  height: 100%;
+  position: relative;
+}
+
+.sanctuary-3d-canvas {
+  width: 100% !important;
+  height: 100% !important;
+  cursor: grab;
+}
+
+.sanctuary-3d-canvas:active {
+  cursor: grabbing;
+}
+
+/* 3D Controls */
+.controls-3d {
+  position: absolute;
+  bottom: 20px;
+  left: 20px;
+  background: rgba(0, 0, 0, 0.8);
+  backdrop-filter: blur(10px);
+  border-radius: 12px;
+  padding: 16px;
+  color: white;
+  font-size: 12px;
+  max-width: 200px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  transition: all 0.3s ease;
+  z-index: 10;
+}
+
+.controls-3d.hidden {
+  height: 40px;
+  overflow: hidden;
+}
+
+.controls-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.controls-header h4 {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.toggle-controls {
+  background: none;
+  border: none;
+  color: rgba(255, 255, 255, 0.7);
+  cursor: pointer;
+  font-size: 18px;
+  padding: 0;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+}
+
+.toggle-controls:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: white;
+}
+
+.controls-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.control-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 4px 0;
+}
+
+.control-action {
+  color: rgba(255, 255, 255, 0.9);
+  font-weight: 500;
+}
+
+.control-input {
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 11px;
+  background: rgba(255, 255, 255, 0.1);
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+/* Empty State */
+.empty-3d {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  text-align: center;
+  color: rgba(255, 255, 255, 0.8);
+  z-index: 5;
+  max-width: 400px;
+  padding: 40px;
+}
+
+.empty-3d-content h3 {
+  font-size: 24px;
+  font-weight: 600;
+  margin-bottom: 12px;
+  font-family: 'Playfair Display', serif;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.empty-3d-content p {
+  font-size: 16px;
+  line-height: 1.5;
+  opacity: 0.7;
+  margin-bottom: 24px;
+}
+
+.empty-3d-hint {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 50px;
+  padding: 12px 20px;
+  display: inline-block;
+  font-weight: 500;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+/* Loading State */
+.loading-3d {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  color: rgba(255, 255, 255, 0.8);
+  z-index: 100;
+}
+
+.loading-3d-spinner {
+  width: 50px;
+  height: 50px;
+  border: 3px solid rgba(255, 255, 255, 0.3);
+  border-top: 3px solid white;
+  border-radius: 50%;
+  animation: spin-3d 1s linear infinite;
+}
+
+@keyframes spin-3d {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.loading-3d p {
+  font-size: 16px;
+  font-weight: 500;
+  margin: 0;
+}
+
+/* Info Panel */
+.info-3d {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(10px);
+  border-radius: 8px;
+  padding: 12px 16px;
+  color: white;
+  font-size: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  z-index: 10;
+}
+
+.element-count-3d {
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+.tip-3d {
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 11px;
+}
+
+/* Performance optimizations */
+.sanctuary-3d-canvas {
+  will-change: transform;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .controls-3d {
+    bottom: 70px; /* Account for mobile nav */
+    left: 10px;
+    padding: 12px;
+    max-width: 180px;
+  }
+
+  .controls-header h4 {
+    font-size: 12px;
+  }
+
+  .control-item {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 2px;
+  }
+
+  .control-input {
+    font-size: 10px;
+  }
+
+  .info-3d {
+    top: 10px;
+    right: 10px;
+    padding: 8px 12px;
+    font-size: 11px;
+  }
+
+  .empty-3d {
+    padding: 30px 20px;
+  }
+
+  .empty-3d-content h3 {
+    font-size: 20px;
+  }
+
+  .empty-3d-content p {
+    font-size: 14px;
+  }
+}
+
+@media (max-width: 480px) {
+  .controls-3d {
+    bottom: 80px;
+    left: 5px;
+    padding: 10px;
+    max-width: 150px;
+    font-size: 11px;
+  }
+
+  .info-3d {
+    top: 5px;
+    right: 5px;
+    padding: 6px 10px;
+    font-size: 10px;
+  }
+
+  .empty-3d {
+    padding: 20px 15px;
+  }
+
+  .empty-3d-content h3 {
+    font-size: 18px;
+  }
+
+  .empty-3d-content p {
+    font-size: 13px;
+  }
+
+  .loading-3d-spinner {
+    width: 40px;
+    height: 40px;
+    border-width: 2px;
+  }
+}
+
+/* High contrast mode */
+@media (prefers-contrast: high) {
+  .sanctuary-3d-container {
+    background: #000000;
+    border: 2px solid #ffffff;
+  }
+
+  .controls-3d {
+    background: #ffffff;
+    color: #000000;
+    border: 2px solid #000000;
+  }
+
+  .info-3d {
+    background: #ffffff;
+    color: #000000;
+    border: 2px solid #000000;
+  }
+
+  .toggle-controls {
+    color: #000000;
+  }
+
+  .toggle-controls:hover {
+    background: #000000;
+    color: #ffffff;
+  }
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .loading-3d-spinner {
+    animation: none;
+  }
+
+  .controls-3d {
+    transition: none;
+  }
+}
+
+/* Touch devices */
+@media (hover: none) and (pointer: coarse) {
+  .sanctuary-3d-canvas {
+    cursor: default;
+  }
+
+  .controls-3d {
+    bottom: 90px; /* More space on touch devices */
+  }
+
+  .control-input {
+    font-size: 10px;
+    padding: 3px 8px;
+  }
+}
+
+/* Landscape mobile */
+@media (max-width: 768px) and (orientation: landscape) {
+  .controls-3d {
+    bottom: 10px;
+    left: 10px;
+    transform: scale(0.9);
+  }
+
+  .info-3d {
+    transform: scale(0.9);
+  }
+}
+
+/* Print styles */
+@media print {
+  .sanctuary-3d-container {
+    background: white !important;
+    border: 1px solid black !important;
+  }
+
+  .controls-3d,
+  .info-3d,
+  .loading-3d {
+    display: none !important;
+  }
+
+  .empty-3d {
+    color: black !important;
+  }
+}
+
+/* Focus states for accessibility */
+.toggle-controls:focus {
+  outline: 2px solid #ffffff;
+  outline-offset: 2px;
+}
+
+/* Dark mode adjustments */
+@media (prefers-color-scheme: dark) {
+  .sanctuary-3d-container {
+    background: linear-gradient(135deg, #000000 0%, #1a1a1a 100%);
+  }
+}
+
+/* Canvas error states */
+.canvas-error {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  text-align: center;
+  color: rgba(255, 255, 255, 0.8);
+  z-index: 100;
+}
+
+.canvas-error h3 {
+  font-size: 18px;
+  margin-bottom: 8px;
+  color: #ef4444;
+}
+
+.canvas-error p {
+  font-size: 14px;
+  opacity: 0.7;
+  margin-bottom: 16px;
+}
+
+.canvas-error button {
+  background: rgba(255, 255, 255, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  color: white;
+  padding: 8px 16px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.canvas-error button:hover {
+  background: rgba(255, 255, 255, 0.3);
+}

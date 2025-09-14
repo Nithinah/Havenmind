@@ -1,0 +1,348 @@
+/* EmotionInput.css */
+
+.emotion-input {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.journal-form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* Input Container */
+.input-container {
+  position: relative;
+}
+
+.journal-textarea {
+  width: 100%;
+  min-height: 80px;
+  max-height: 200px;
+  padding: 16px;
+  border: 2px solid rgba(99, 102, 241, 0.2);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.8);
+  color: #1f2937;
+  font-size: 14px;
+  line-height: 1.5;
+  font-family: inherit;
+  resize: none;
+  transition: all 0.2s ease;
+  overflow-y: auto;
+}
+
+.journal-textarea:focus {
+  outline: none;
+  border-color: #6366f1;
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+  background: rgba(255, 255, 255, 0.95);
+}
+
+.journal-textarea::placeholder {
+  color: #9ca3af;
+  font-style: italic;
+}
+
+.journal-textarea:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+/* Textarea Overlay */
+.textarea-overlay {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  pointer-events: none;
+}
+
+.prompts-trigger {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  background: rgba(99, 102, 241, 0.1);
+  border: 1px solid rgba(99, 102, 241, 0.2);
+  border-radius: 20px;
+  color: #6366f1;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  pointer-events: auto;
+}
+
+.prompts-trigger:hover {
+  background: rgba(99, 102, 241, 0.15);
+  border-color: rgba(99, 102, 241, 0.3);
+  transform: translateY(-1px);
+}
+
+/* Input Footer */
+.input-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.input-meta {
+  display: flex;
+  gap: 16px;
+  font-size: 12px;
+  color: #6b7280;
+}
+
+.word-count {
+  font-weight: 500;
+}
+
+.char-count {
+  font-weight: 500;
+}
+
+.submit-button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 20px;
+  background: #6366f1;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  min-width: 100px;
+  justify-content: center;
+}
+
+.submit-button:hover:not(:disabled) {
+  background: #5856eb;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+}
+
+.submit-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.spin {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* Prompts Container */
+.prompts-container {
+  background: rgba(255, 255, 255, 0.95);
+  border: 1px solid rgba(99, 102, 241, 0.2);
+  border-radius: 12px;
+  padding: 16px;
+  overflow: hidden;
+}
+
+.prompts-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+  color: #6366f1;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.prompts-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.prompt-item {
+  text-align: left;
+  padding: 12px 16px;
+  background: rgba(99, 102, 241, 0.05);
+  border: 1px solid rgba(99, 102, 241, 0.1);
+  border-radius: 8px;
+  color: #4b5563;
+  font-size: 13px;
+  line-height: 1.4;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.prompt-item:hover {
+  background: rgba(99, 102, 241, 0.1);
+  border-color: rgba(99, 102, 241, 0.2);
+  color: #6366f1;
+  transform: translateY(-1px);
+}
+
+.prompts-footer {
+  text-align: center;
+}
+
+.close-prompts {
+  background: none;
+  border: none;
+  color: #6b7280;
+  font-size: 12px;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+}
+
+.close-prompts:hover {
+  background: rgba(107, 114, 128, 0.1);
+  color: #374151;
+}
+
+/* Encouragement Messages */
+.encouragement {
+  background: rgba(59, 130, 246, 0.1);
+  border: 1px solid rgba(59, 130, 246, 0.2);
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-size: 12px;
+  color: #3b82f6;
+  text-align: center;
+  font-weight: 500;
+}
+
+.encouragement.positive {
+  background: rgba(34, 197, 94, 0.1);
+  border-color: rgba(34, 197, 94, 0.2);
+  color: #22c55e;
+}
+
+/* Responsive Design */
+@media (max-width: 480px) {
+  .journal-textarea {
+    padding: 12px;
+    font-size: 13px;
+  }
+
+  .input-footer {
+    flex-direction: column;
+    gap: 12px;
+    align-items: stretch;
+  }
+
+  .submit-button {
+    width: 100%;
+    padding: 12px;
+  }
+
+  .prompts-trigger {
+    padding: 4px 8px;
+    font-size: 11px;
+  }
+
+  .prompt-item {
+    padding: 10px 12px;
+    font-size: 12px;
+  }
+
+  .prompts-container {
+    padding: 12px;
+  }
+}
+
+/* High contrast mode */
+@media (prefers-contrast: high) {
+  .journal-textarea {
+    background: #ffffff;
+    border: 2px solid #000000;
+    color: #000000;
+  }
+
+  .journal-textarea:focus {
+    border-color: #000000;
+    box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.2);
+  }
+
+  .submit-button {
+    background: #000000;
+    border: 2px solid #000000;
+  }
+
+  .prompts-container {
+    background: #ffffff;
+    border: 2px solid #000000;
+  }
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .journal-textarea,
+  .submit-button,
+  .prompts-trigger,
+  .prompt-item {
+    transition: none;
+  }
+
+  .submit-button:hover,
+  .prompts-trigger:hover,
+  .prompt-item:hover {
+    transform: none;
+  }
+
+  .spin {
+    animation: none;
+  }
+}
+
+/* Focus states for better accessibility */
+.prompts-trigger:focus,
+.prompt-item:focus,
+.close-prompts:focus,
+.submit-button:focus {
+  outline: 2px solid #6366f1;
+  outline-offset: 2px;
+}
+
+/* Scrollbar styling for textarea */
+.journal-textarea::-webkit-scrollbar {
+  width: 4px;
+}
+
+.journal-textarea::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.05);
+  border-radius: 2px;
+}
+
+.journal-textarea::-webkit-scrollbar-thumb {
+  background: rgba(99, 102, 241, 0.3);
+  border-radius: 2px;
+}
+
+.journal-textarea::-webkit-scrollbar-thumb:hover {
+  background: rgba(99, 102, 241, 0.5);
+}
+
+/* Print styles */
+@media print {
+  .emotion-input {
+    background: white !important;
+  }
+  
+  .prompts-container,
+  .encouragement {
+    display: none !important;
+  }
+  
+  .journal-textarea {
+    border: 1px solid black !important;
+    background: white !important;
+  }
+}

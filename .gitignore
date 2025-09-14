@@ -1,0 +1,91 @@
+# Python
+__pycache__/
+*.py[cod]
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+.eggs/
+*.pyo
+*.pyd
+*.db
+*.sqlite3
+*.log
+*.pot
+*.mo
+*.env
+.env
+.venv
+venv/
+ENV/
+.env.*
+
+# VSCode
+.vscode/
+
+# Jupyter Notebooks
+.ipynb_checkpoints
+
+# macOS
+.DS_Store
+
+# Windows
+Thumbs.db
+Desktop.ini
+
+# Node
+node_modules/
+.npm/
+
+# React
+/build
+/build/
+
+# Docker
+*.pid
+docker-compose.override.yml
+
+# Misc
+*.swp
+*.swo
+*.bak
+*.tmp
+*.orig
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+
+# Frontend build
+frontend/build/
+
+# Backend
+backend/havenmind.db
+
+# Logs
+*.log
+logs/
+
+# Coverage
+htmlcov/
+.coverage
+.coverage.*
+.cache
+
+# Test
+.pytest_cache/
+
+# Others
+*.pem
+*.key
+*.crt
+*.pfx
+*.p12
+
+# Ignore local env files
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
