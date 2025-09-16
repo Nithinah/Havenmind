@@ -19,10 +19,10 @@ class Settings:
     
     # CORS
     CORS_ORIGINS: list = [
-        "http://localhost:3000",
-        "http://localhost:3001",
-        "http://127.0.0.1:3000",
-        "http://127.0.0.1:3001"
+        "http://localhost:3050",
+        "http://localhost:3051",
+        "http://127.0.0.1:3050",
+        "http://127.0.0.1:3051",
     ]
     
     # Image Generation

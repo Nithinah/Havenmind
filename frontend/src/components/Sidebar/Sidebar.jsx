@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
-  Home, BookOpen, Target, Cube, Menu, X, 
+  Home, BookOpen, Target, Box , Menu, X, 
   Settings, User, Moon, Sun 
 } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
@@ -179,7 +179,7 @@ const Sidebar = ({
                   className={`mode-toggle ${is3DMode ? 'active-3d' : 'active-2d'}`}
                   onClick={onToggle3D}
                 >
-                  <Cube size={16} />
+                  <Box size={16} />
                   <span>{is3DMode ? '3D View' : '2D View'}</span>
                   <div className="toggle-indicator" />
                 </button>

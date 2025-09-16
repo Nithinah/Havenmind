@@ -249,8 +249,8 @@
   flex-shrink: 0;
 }
 
-.element-details {
-  space-y: 16px;
+.element-details > * + * {
+  margin-top: 16px;
 }
 
 .detail-row {
