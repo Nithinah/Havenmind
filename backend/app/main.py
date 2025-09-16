@@ -24,13 +24,15 @@ app = FastAPI(
     redoc_url="/redoc" if settings.DEBUG else None
 )
 
-# Configure CORS
+# Configure CORS - This fixes the OPTIONS 400 Bad Request errors
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.CORS_ORIGINS,
     allow_credentials=True,
-    allow_methods=["GET", "POST", "PUT", "DELETE"],
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],  # Added OPTIONS
     allow_headers=["*"],
+    expose_headers=["*"],
+    max_age=86400,  # Cache preflight requests for 24 hours
 )
 
 # Include routers
@@ -88,6 +90,20 @@ async def global_exception_handler(request, exc):
         }
     )
 
+# Add preflight OPTIONS handler for all routes
+@app.options("/{full_path:path}")
+async def options_handler(full_path: str):
+    """Handle preflight OPTIONS requests."""
+    return JSONResponse(
+        status_code=200,
+        content={},
+        headers={
+            "Access-Control-Allow-Origin": "*",
+            "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
+            "Access-Control-Allow-Headers": "*",
+        }
+    )
+
 @app.get("/")
 async def root():
     """Root endpoint with API information."""
@@ -127,27 +143,12 @@ async def health_check():
             "status": "healthy",
             "database": "connected",
             "api_services": api_status,
-            "timestamp": "2024-01-01T00:00:00Z"  # Would use actual timestamp
+            "timestamp": "2024-01-01T00:00:00Z"
         }
         
     except Exception as e:
         logger.error(f"Health check failed: {e}")
         raise HTTPException(status_code=503, detail="Service unhealthy")
-
-@app.get("/config")
-async def get_config():
-    """Get public configuration information."""
-    if not settings.DEBUG:
-        raise HTTPException(status_code=404, detail="Not found")
-    
-    return {
-        "debug": settings.DEBUG,
-        "cors_origins": settings.CORS_ORIGINS,
-        "available_skills": settings.SKILLS_LIST,
-        "story_styles": settings.STORY_STYLES,
-        "mastery_levels": settings.SKILL_MASTERY_LEVELS,
-        "image_size": settings.DEFAULT_IMAGE_SIZE
-    }
 
 if __name__ == "__main__":
     uvicorn.run(

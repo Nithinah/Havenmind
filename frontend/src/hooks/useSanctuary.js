@@ -1,75 +1,134 @@
 import { useState, useEffect, useCallback } from 'react';
-import { sanctuaryService } from '../services/sanctuary.js';
+import apiService from '../services/api.js';
 
-export const useSanctuary = (userId) => {
-  const [sanctuary, setSanctuary] = useState(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
+export const useSanctuary = (sessionId) => {
+  const [elements, setElements] = useState([]);
   const [stats, setStats] = useState(null);
+  const [companionMessage, setCompanionMessage] = useState(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState(null);
 
-  const fetchSanctuary = useCallback(async () => {
-    if (!userId) return;
+  // Load sanctuary elements
+  const loadElements = useCallback(async () => {
+    if (!sessionId) return;
     
-    setLoading(true);
+    setIsLoading(true);
     setError(null);
     
     try {
-      const sanctuaryData = await sanctuaryService.getSanctuary(userId);
-      setSanctuary(sanctuaryData);
+      const data = await apiService.get(`/sanctuary/elements/${sessionId}`);
+      setElements(data || []);
     } catch (err) {
+      console.error('Failed to load sanctuary elements:', err);
       setError(err.message);
+      setElements([]);
     } finally {
-      setLoading(false);
+      setIsLoading(false);
     }
-  }, [userId]);
+  }, [sessionId]);
 
-  const updateMood = async (mood, intensity) => {
-    if (!sanctuary) return;
+  // Load sanctuary stats
+  const loadStats = useCallback(async () => {
+    if (!sessionId) return;
     
-    setLoading(true);
     try {
-      const result = await sanctuaryService.updateMood(sanctuary.id, mood, intensity);
-      setSanctuary(prev => ({ ...prev, ...result }));
+      const data = await apiService.get(`/sanctuary/stats/${sessionId}`);
+      setStats(data);
     } catch (err) {
+      console.error('Failed to load sanctuary stats:', err);
+    }
+  }, [sessionId]);
+
+  // Create journal entry
+  const createJournalEntry = async (entryData) => {
+    if (!sessionId) throw new Error('Session ID required');
+    
+    setIsLoading(true);
+    setError(null);
+    
+    try {
+      const response = await apiService.post('/sanctuary/journal-entry', {
+        ...entryData,
+        session_id: sessionId
+      });
+      
+      // Reload elements and stats after creating entry
+      await Promise.all([loadElements(), loadStats()]);
+      
+      // Set companion message if available
+      if (response.companion_response) {
+        setCompanionMessage(response.companion_response);
+      }
+      
+      return response;
+    } catch (err) {
+      console.error('Failed to create journal entry:', err);
       setError(err.message);
+      throw err;
     } finally {
-      setLoading(false);
+      setIsLoading(false);
     }
   };
 
-  const getCompanionMessage = async (emotion, context) => {
+  // Remove element
+  const removeElement = async (elementId) => {
     try {
-      const response = await sanctuaryService.getCompanionMessage(emotion, context);
-      return response.message;
+      await apiService.delete(`/sanctuary/elements/${elementId}`);
+      await loadElements(); // Refresh elements list
     } catch (err) {
-      setError(err.message);
-      return null;
+      console.error('Failed to remove element:', err);
+      throw err;
     }
   };
 
-  const fetchStats = useCallback(async () => {
-    if (!userId) return;
+  // Get journal entries
+  const getJournalEntries = async (limit = 50, offset = 0) => {
+    if (!sessionId) return [];
     
     try {
-      const statsData = await sanctuaryService.getSanctuaryStats(userId);
-      setStats(statsData);
+      return await apiService.get(`/sanctuary/journal/${sessionId}?limit=${limit}&offset=${offset}`);
     } catch (err) {
-      console.error('Failed to fetch sanctuary stats:', err);
+      console.error('Failed to get journal entries:', err);
+      return [];
     }
-  }, [userId]);
+  };
 
+  // Create new session
+  const createNewSession = async () => {
+    try {
+      const response = await apiService.get('/sanctuary/session/new');
+      return response.session_id;
+    } catch (err) {
+      console.error('Failed to create new session:', err);
+      throw err;
+    }
+  };
+
+  // Load data when sessionId changes
   useEffect(() => {
-    fetchSanctuary();
-    fetchStats();
-  }, [fetchSanctuary, fetchStats]);
+    if (sessionId) {
+      loadElements();
+      loadStats();
+    }
+  }, [sessionId, loadElements, loadStats]);
+
+  // Refresh all data
+  const refreshElements = useCallback(async () => {
+    await Promise.all([loadElements(), loadStats()]);
+  }, [loadElements, loadStats]);
 
   return {
-    sanctuary,
-    loading,
-    error,
+    elements,
     stats,
-    updateMood,
-    getCompanionMessage,
-    refetch: fetchSanctuary
+    companionMessage,
+    isLoading,
+    error,
+    createJournalEntry,
+    removeElement,
+    getJournalEntries,
+    createNewSession,
+    refreshElements,
+    setCompanionMessage,
+    setError
   };
 };

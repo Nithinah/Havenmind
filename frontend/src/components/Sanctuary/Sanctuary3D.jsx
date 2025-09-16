@@ -1,9 +1,10 @@
 import React, { Suspense, useMemo, useRef, useState } from 'react';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
-import { OrbitControls, Text, Float, Environment, Stars } from '@react-three/drei';
+import { OrbitControls, Text, Float, Stars } from '@react-three/drei';
 import { motion } from 'framer-motion';
 import * as THREE from 'three';
 import './Sanctuary3D.css';
+
 
 // Individual 3D Element Component
 const SanctuaryElement3D = ({ element, onClick }) => {
@@ -205,7 +206,7 @@ const Scene3D = ({ elements, onElementClick }) => {
 
 // Main Component
 const Sanctuary3D = ({ sessionId, elements = [], onElementClick }) => {
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading] = useState(false);
   const [showControls, setShowControls] = useState(true);
 
   return (

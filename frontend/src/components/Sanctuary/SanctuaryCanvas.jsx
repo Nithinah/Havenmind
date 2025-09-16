@@ -44,7 +44,7 @@ const SanctuaryCanvas = ({
         cancelAnimationFrame(animationRef.current);
       }
     };
-  }, []);
+  }, [initializeParticles]); // Added missing dependency
 
   // Initialize ambient particles
   const initializeParticles = () => {
@@ -75,7 +75,7 @@ const SanctuaryCanvas = ({
         cancelAnimationFrame(animationRef.current);
       }
     };
-  }, [elements, hoveredElement, mousePos, canvasSize]);
+  }, [elements, hoveredElement, mousePos, canvasSize, draw]);
 
   // Main drawing function
   const draw = () => {
@@ -162,7 +162,7 @@ const SanctuaryCanvas = ({
   };
 
   const drawSanctuaryElement = (ctx, element, index) => {
-    const { x_position, y_position, size, color, element_type, emotion, image_url } = element;
+    const { x_position, y_position, size, color, element_type, image_url } = element;
     const time = Date.now() * 0.001;
     
     // Element pulsing animation based on sentiment

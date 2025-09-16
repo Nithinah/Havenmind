@@ -335,3 +335,58 @@ def _generate_skill_recommendations(recent_emotions: List[str], unlocked_skills:
     recommendations.sort(key=lambda x: priority_order.get(x["priority"], 2))
     
     return recommendations[:3]
+
+@router.get("/available/list")
+async def get_available_skills():
+    """Get list of all available skills with descriptions."""
+    try:
+        from app.utils.helpers import get_skill_description
+        from app.config import settings
+        
+        skills_info = []
+        for skill_name in settings.SKILLS_LIST:
+            skill_info = get_skill_description(skill_name, 0)
+            skills_info.append({
+                "skill_name": skill_name,
+                "display_name": skill_info["name"],
+                "description": skill_info["description"],
+                "category": _get_skill_category(skill_name),
+                "difficulty": _get_skill_difficulty(skill_name),
+                "benefits": _get_skill_benefits(skill_name)
+            })
+        
+        return {"skills": skills_info}
+        
+    except Exception as e:
+        logger.error(f"Error getting available skills: {e}")
+        raise HTTPException(status_code=500, detail="Failed to get available skills")
+
+# ADD THIS ENDPOINT - Frontend calls this to get personalized skill recommendations
+@router.get("/recommendations/{session_id}")
+async def get_skill_recommendations(session_id: str, db: Session = Depends(get_db)):
+    """Get personalized skill recommendations based on user's emotional patterns."""
+    try:
+        from app.models.sanctuary import JournalEntry, UserSkill
+        from sqlalchemy import desc
+        
+        # Get recent emotional patterns
+        recent_entries = db.query(JournalEntry).filter(
+            JournalEntry.session_id == session_id
+        ).order_by(desc(JournalEntry.created_at)).limit(10).all()
+        
+        # Get user's current skills
+        user_skills = db.query(UserSkill).filter(
+            UserSkill.session_id == session_id,
+            UserSkill.unlocked == True
+        ).all()
+        
+        unlocked_skills = {skill.skill_name for skill in user_skills}
+        recent_emotions = [entry.emotion for entry in recent_entries]
+        
+        recommendations = _generate_skill_recommendations(recent_emotions, unlocked_skills)
+        
+        return {"recommendations": recommendations}
+        
+    except Exception as e:
+        logger.error(f"Error getting skill recommendations: {e}")
+        raise HTTPException(status_code=500, detail="Failed to get skill recommendations")

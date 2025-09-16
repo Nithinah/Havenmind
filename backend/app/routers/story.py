@@ -347,3 +347,117 @@ def _determine_story_recommendation(recent_emotions: List[str], avg_sentiment: f
             "recommended_theme": "present_moment_awareness", 
             "reason": "Meditation stories can help you find balance and appreciate the present moment."
         }
+    
+@router.get("/styles")
+async def get_story_styles():
+    """Get available story styles."""
+    return {
+        "styles": [
+            {
+                "id": "allegory",
+                "name": "Allegory",
+                "description": "Symbolic stories that mirror your emotional journey with metaphorical characters and situations."
+            },
+            {
+                "id": "fairy_tale", 
+                "name": "Fairy Tale",
+                "description": "Magical stories with enchanted elements, wise creatures, and transformative adventures."
+            },
+            {
+                "id": "meditation",
+                "name": "Meditation",
+                "description": "Contemplative narratives that guide you through peaceful inner journeys and mindful reflection."
+            },
+            {
+                "id": "adventure", 
+                "name": "Adventure",
+                "description": "Uplifting tales of courage and discovery that mirror your personal growth journey."
+            },
+            {
+                "id": "wisdom",
+                "name": "Wisdom Story", 
+                "description": "Ancient parable-style stories that share timeless insights about healing and growth."
+            }
+        ]
+    }
+
+# ADD THIS ENDPOINT - Frontend calls this to get story themes
+@router.get("/themes")
+async def get_story_themes():
+    """Get available story themes."""
+    return {
+        "themes": [
+            {
+                "id": "overcoming_challenges",
+                "name": "Overcoming Challenges",
+                "description": "Stories about resilience, strength, and rising above difficulties."
+            },
+            {
+                "id": "transformation_and_growth",
+                "name": "Transformation & Growth", 
+                "description": "Tales of personal evolution, change, and reaching your potential."
+            },
+            {
+                "id": "finding_inner_light",
+                "name": "Finding Inner Light",
+                "description": "Stories about discovering joy, hope, and the bright spots in life."
+            },
+            {
+                "id": "connection_and_belonging",
+                "name": "Connection & Belonging",
+                "description": "Narratives about relationships, community, and finding your place."
+            },
+            {
+                "id": "finding_peace_in_uncertainty",
+                "name": "Peace in Uncertainty", 
+                "description": "Stories about finding calm and acceptance amid life's unknowns."
+            },
+            {
+                "id": "the_healing_journey",
+                "name": "The Healing Journey",
+                "description": "Tales of recovery, self-care, and the process of becoming whole."
+            },
+            {
+                "id": "present_moment_awareness",
+                "name": "Present Moment Awareness",
+                "description": "Stories about mindfulness, being here now, and finding peace in the present."
+            },
+            {
+                "id": "discovering_inner_wisdom",
+                "name": "Discovering Inner Wisdom",
+                "description": "Narratives about trusting yourself and accessing your inner knowledge."
+            }
+        ]
+    }
+
+# ADD THIS ENDPOINT - Frontend calls this to get personalized recommendations
+@router.get("/recommend/{session_id}")
+async def get_story_recommendation(session_id: str, db: Session = Depends(get_db)):
+    """Get personalized story recommendation based on user's recent emotional patterns."""
+    try:
+        # Get recent emotional context
+        recent_entries = db.query(JournalEntry).filter(
+            JournalEntry.session_id == session_id
+        ).order_by(desc(JournalEntry.created_at)).limit(10).all()
+        
+        if not recent_entries:
+            # Default recommendation for new users
+            return {
+                "recommended_style": "fairy_tale",
+                "recommended_theme": "discovering_inner_wisdom",
+                "reason": "Perfect for beginning your healing journey with gentle wisdom and wonder."
+            }
+        
+        # Analyze recent emotions
+        recent_emotions = [entry.emotion for entry in recent_entries]
+        recent_sentiments = [entry.sentiment_score for entry in recent_entries]
+        avg_sentiment = sum(recent_sentiments) / len(recent_sentiments)
+        
+        # Determine recommendations using the existing logic
+        recommendation = _determine_story_recommendation(recent_emotions, avg_sentiment)
+        
+        return recommendation
+        
+    except Exception as e:
+        logger.error(f"Error getting story recommendation: {e}")
+        raise HTTPException(status_code=500, detail="Failed to get story recommendation")

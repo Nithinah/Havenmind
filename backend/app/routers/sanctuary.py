@@ -5,6 +5,7 @@ from typing import List, Dict, Any, Optional
 from datetime import datetime, timedelta
 import logging
 
+
 from app.database import get_db
 from app.models.sanctuary import (
     SanctuaryElement, JournalEntry,
@@ -349,3 +350,41 @@ async def get_sanctuary_context(db: Session, journal_id: int) -> Dict[str, Any]:
     except Exception as e:
         logger.error(f"Error getting sanctuary context: {e}")
         return {}
+
+@router.get("/elements/{session_id}", response_model=List[SanctuaryElementResponse])
+async def get_sanctuary_elements(session_id: str, db: Session = Depends(get_db)):
+    """Get all sanctuary elements for a session."""
+    try:
+        elements = db.query(SanctuaryElement).filter(
+            SanctuaryElement.session_id == session_id
+        ).order_by(SanctuaryElement.created_at).all()
+        
+        return [SanctuaryElementResponse.from_orm(element) for element in elements]
+        
+    except Exception as e:
+        logger.error(f"Error getting sanctuary elements: {e}")
+        raise HTTPException(status_code=500, detail="Failed to get sanctuary elements")
+
+# ADD THIS ENDPOINT - Frontend calls this to delete elements
+@router.delete("/elements/{element_id}")
+async def delete_sanctuary_element(element_id: int, db: Session = Depends(get_db)):
+    """Delete a sanctuary element."""
+    try:
+        element = db.query(SanctuaryElement).filter(
+            SanctuaryElement.id == element_id
+        ).first()
+        
+        if not element:
+            raise HTTPException(status_code=404, detail="Element not found")
+        
+        db.delete(element)
+        db.commit()
+        
+        return {"message": "Element deleted successfully"}
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        db.rollback()
+        logger.error(f"Error deleting sanctuary element: {e}")
+        raise HTTPException(status_code=500, detail="Failed to delete element")

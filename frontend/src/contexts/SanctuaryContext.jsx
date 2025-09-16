@@ -93,7 +93,10 @@ export const SanctuaryProvider = ({ children, userId }) => {
 
   useEffect(() => {
     loadSanctuary();
-  }, [userId]);
+  }, [loadSanctuary]); // Added missing dependency
+
+// You'll need to wrap loadSanctuary with useCallback:
+
 
   const value = {
     ...state,

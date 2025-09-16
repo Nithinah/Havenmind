@@ -1,110 +1,155 @@
 import { useState, useEffect, useCallback } from 'react';
-import { skillsService } from '../services/skills.js';
+import apiService from '../services/api.js';
 
-export const useSkills = (userId) => {
+export const useSkills = (sessionId) => {
   const [skills, setSkills] = useState([]);
-  const [categories, setCategories] = useState([]);
-  const [loading, setLoading] = useState(false);
+  const [skillStats, setSkillStats] = useState(null);
+  const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
   const [recommendations, setRecommendations] = useState([]);
 
-  const fetchSkills = useCallback(async () => {
-    if (!userId) return;
+  // Load user skills
+  const loadSkills = useCallback(async () => {
+    if (!sessionId) return;
     
-    setLoading(true);
+    setIsLoading(true);
     setError(null);
     
     try {
-      const skillsData = await skillsService.getSkills(userId);
-      setSkills(skillsData);
+      const data = await apiService.get(`/skills/${sessionId}`);
+      setSkills(data || []);
     } catch (err) {
+      console.error('Failed to load skills:', err);
       setError(err.message);
+      setSkills([]);
     } finally {
-      setLoading(false);
+      setIsLoading(false);
     }
-  }, [userId]);
+  }, [sessionId]);
 
-  const createSkillGoal = async (skillData) => {
-    setLoading(true);
-    try {
-      const newSkill = await skillsService.createSkillGoal(skillData);
-      setSkills(prev => [...prev, newSkill]);
-      return newSkill;
-    } catch (err) {
-      setError(err.message);
-      return null;
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const updateProgress = async (skillId, progress) => {
-    try {
-      const result = await skillsService.updateSkillProgress(skillId, progress);
-      setSkills(prev => 
-        prev.map(skill => 
-          skill.id === skillId ? { ...skill, ...result } : skill
-        )
-      );
-    } catch (err) {
-      setError(err.message);
-    }
-  };
-
-  const getGuidance = async (skillId, currentLevel) => {
-    try {
-      const guidance = await skillsService.getSkillGuidance(skillId, currentLevel);
-      return guidance;
-    } catch (err) {
-      setError(err.message);
-      return null;
-    }
-  };
-
-  const trackUsage = async (skillId, duration, effectiveness) => {
-    try {
-      await skillsService.trackSkillUsage(skillId, duration, effectiveness);
-    } catch (err) {
-      console.error('Failed to track skill usage:', err);
-    }
-  };
-
-  const fetchRecommendations = useCallback(async (interests) => {
-    if (!userId) return;
+  // Load skill statistics
+  const loadSkillStats = useCallback(async () => {
+    if (!sessionId) return;
     
     try {
-      const recs = await skillsService.getRecommendedSkills(userId, interests);
-      setRecommendations(recs);
+      const data = await apiService.get(`/skills/statistics/${sessionId}`);
+      setSkillStats(data);
     } catch (err) {
-      console.error('Failed to fetch skill recommendations:', err);
+      console.error('Failed to load skill stats:', err);
     }
-  }, [userId]);
+  }, [sessionId]);
 
-  const fetchCategories = useCallback(async () => {
+  // Practice a skill
+  const practiceSkill = async (practiceData) => {
+    setIsLoading(true);
+    setError(null);
+    
     try {
-      const categoriesData = await skillsService.getSkillCategories();
-      setCategories(categoriesData);
+      const response = await apiService.post('/skills/practice', practiceData);
+      
+      // Reload skills and stats after practice
+      await Promise.all([loadSkills(), loadSkillStats()]);
+      
+      return response;
     } catch (err) {
-      console.error('Failed to fetch skill categories:', err);
+      console.error('Failed to record skill practice:', err);
+      setError(err.message);
+      throw err;
+    } finally {
+      setIsLoading(false);
     }
-  }, []);
+  };
 
+  // Get skill guidance
+  const getSkillGuidance = async (skillName, masteryLevel, userContext = {}) => {
+    try {
+      const params = new URLSearchParams({
+        mastery_level: masteryLevel.toString(),
+        ...Object.entries(userContext).reduce((acc, [key, value]) => {
+          if (value !== undefined && value !== null) {
+            acc[key] = value.toString();
+          }
+          return acc;
+        }, {})
+      });
+      
+      const response = await apiService.get(`/skills/guidance/${skillName}?${params}`);
+      return response;
+    } catch (err) {
+      console.error('Failed to get skill guidance:', err);
+      throw err;
+    }
+  };
+
+  // Get skill recommendations
+  const getSkillRecommendations = async () => {
+    if (!sessionId) return [];
+    
+    try {
+      const response = await apiService.get(`/skills/recommendations/${sessionId}`);
+      setRecommendations(response.recommendations || []);
+      return response.recommendations || [];
+    } catch (err) {
+      console.error('Failed to get skill recommendations:', err);
+      return [];
+    }
+  };
+
+  // Get available skills
+  const getAvailableSkills = async () => {
+    try {
+      const response = await apiService.get('/skills/available/list');
+      return response.skills || [];
+    } catch (err) {
+      console.error('Failed to get available skills:', err);
+      return [];
+    }
+  };
+
+  // Unlock a skill (for testing)
+  const unlockSkill = async (skillName) => {
+    if (!sessionId) throw new Error('Session ID required');
+    
+    try {
+      const response = await apiService.post(`/skills/unlock/${sessionId}?skill_name=${skillName}`);
+      await loadSkills(); // Refresh skills list
+      return response;
+    } catch (err) {
+      console.error('Failed to unlock skill:', err);
+      throw err;
+    }
+  };
+
+  // Load data when sessionId changes
   useEffect(() => {
-    fetchSkills();
-    fetchCategories();
-  }, [fetchSkills, fetchCategories]);
+    if (sessionId) {
+      loadSkills();
+      loadSkillStats();
+      getSkillRecommendations();
+    }
+  }, [sessionId, loadSkills, loadSkillStats]);
+
+  // Refresh all data
+  const refreshSkills = useCallback(async () => {
+    await Promise.all([
+      loadSkills(),
+      loadSkillStats(),
+      getSkillRecommendations()
+    ]);
+  }, [loadSkills, loadSkillStats]);
 
   return {
     skills,
-    categories,
+    skillStats,
     recommendations,
-    loading,
+    isLoading,
     error,
-    createSkillGoal,
-    updateProgress,
-    getGuidance,
-    trackUsage,
-    fetchRecommendations,
-    refetch: fetchSkills
+    practiceSkill,
+    getSkillGuidance,
+    getSkillRecommendations,
+    getAvailableSkills,
+    unlockSkill,
+    refreshSkills,
+    setError
   };
 };

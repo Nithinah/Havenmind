@@ -77,27 +77,30 @@ const StoryWeaver = ({ sessionId }) => {
   ];
 
   useEffect(() => {
-    loadStoryHistory();
-    loadRecommendation();
-  }, [sessionId]);
+    if (sessionId) {
+      loadStoryHistory();
+      loadRecommendation();
+    }
+  }, [sessionId, loadStoryHistory, loadRecommendation]); // Added missing dependencies
 
-  const loadStoryHistory = async () => {
+  // You'll need to wrap these functions with useCallback:
+  const loadStoryHistory = useCallback(async () => {
     try {
       const history = await getStoryHistory();
       setStoryHistory(history || []);
     } catch (error) {
       console.error('Error loading story history:', error);
     }
-  };
+  }, [getStoryHistory]);
 
-  const loadRecommendation = async () => {
+  const loadRecommendation = useCallback(async () => {
     try {
       const rec = await getRecommendation();
       setRecommendation(rec);
     } catch (error) {
       console.error('Error loading recommendation:', error);
     }
-  };
+  }, [getRecommendation]);
 
   const handleGenerateStory = async () => {
     if (!selectedStyle) {

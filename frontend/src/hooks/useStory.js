@@ -1,96 +1,132 @@
 import { useState, useEffect, useCallback } from 'react';
-import { storyService } from '../services/story.js';
+import apiService from '../services/api.js';
 
-export const useStory = (userId) => {
+export const useStory = (sessionId) => {
   const [stories, setStories] = useState([]);
   const [currentStory, setCurrentStory] = useState(null);
-  const [loading, setLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
-  const [themes, setThemes] = useState([]);
+  const [recommendation, setRecommendation] = useState(null);
 
-  const fetchStories = useCallback(async () => {
-    if (!userId) return;
+  // Generate a new story
+  const generateStory = async (storyRequest) => {
+    if (!sessionId) throw new Error('Session ID required');
     
-    setLoading(true);
+    setIsLoading(true);
     setError(null);
     
     try {
-      const storiesData = await storyService.getStories(userId);
-      setStories(storiesData);
+      const response = await apiService.post('/story/generate', {
+        ...storyRequest,
+        session_id: sessionId
+      });
+      
+      setCurrentStory(response);
+      
+      // Add to stories list
+      setStories(prev => [response, ...prev]);
+      
+      return response;
     } catch (err) {
+      console.error('Failed to generate story:', err);
       setError(err.message);
+      throw err;
     } finally {
-      setLoading(false);
-    }
-  }, [userId]);
-
-  const createStory = async (storyData) => {
-    setLoading(true);
-    try {
-      const newStory = await storyService.createStory(storyData);
-      setStories(prev => [...prev, newStory]);
-      return newStory;
-    } catch (err) {
-      setError(err.message);
-      return null;
-    } finally {
-      setLoading(false);
+      setIsLoading(false);
     }
   };
 
-  const generateChapter = async (storyId, prompt, emotion) => {
+  // Get story history
+  const getStoryHistory = async (limit = 20, offset = 0) => {
+    if (!sessionId) return [];
+    
     try {
-      const chapter = await storyService.generateStoryChapter(storyId, prompt, emotion);
+      const response = await apiService.get(`/story/history/${sessionId}?limit=${limit}&offset=${offset}`);
+      setStories(response || []);
+      return response || [];
+    } catch (err) {
+      console.error('Failed to get story history:', err);
+      setStories([]);
+      return [];
+    }
+  };
+
+  // Get story styles
+  const getStoryStyles = async () => {
+    try {
+      const response = await apiService.get('/story/styles');
+      return response.styles || [];
+    } catch (err) {
+      console.error('Failed to get story styles:', err);
+      return [];
+    }
+  };
+
+  // Get story themes
+  const getStoryThemes = async () => {
+    try {
+      const response = await apiService.get('/story/themes');
+      return response.themes || [];
+    } catch (err) {
+      console.error('Failed to get story themes:', err);
+      return [];
+    }
+  };
+
+  // Get story recommendation
+  const getRecommendation = async () => {
+    if (!sessionId) return null;
+    
+    try {
+      const response = await apiService.get(`/story/recommend/${sessionId}`);
+      setRecommendation(response);
+      return response;
+    } catch (err) {
+      console.error('Failed to get story recommendation:', err);
+      return null;
+    }
+  };
+
+  // Delete a story
+  const deleteStory = async (storyId) => {
+    try {
+      await apiService.delete(`/story/${storyId}`);
       
+      // Remove from local state
+      setStories(prev => prev.filter(story => story.id !== storyId));
+      
+      // Clear current story if it was deleted
       if (currentStory?.id === storyId) {
-        setCurrentStory(prev => ({
-          ...prev,
-          chapters: [...prev.chapters, chapter]
-        }));
+        setCurrentStory(null);
       }
       
-      return chapter;
     } catch (err) {
-      setError(err.message);
-      return null;
+      console.error('Failed to delete story:', err);
+      throw err;
     }
   };
 
-  const loadStory = async (storyId) => {
-    setLoading(true);
-    try {
-      const story = await storyService.getStory(storyId);
-      setCurrentStory(story);
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const fetchThemes = useCallback(async () => {
-    try {
-      const themesData = await storyService.getStoryThemes();
-      setThemes(themesData);
-    } catch (err) {
-      console.error('Failed to fetch story themes:', err);
-    }
-  }, []);
-
+  // Load story history when sessionId changes
   useEffect(() => {
-    fetchStories();
-    fetchThemes();
-  }, [fetchStories, fetchThemes]);
+    if (sessionId) {
+      getStoryHistory();
+      getRecommendation();
+    }
+  }, [sessionId]);
 
   return {
     stories,
     currentStory,
-    loading,
+    recommendation,
+    isLoading,
     error,
-    themes,
-    createStory,
-    generateChapter,
-    loadStory,
-    refetch: fetchStories
+    generateStory,
+    getStoryHistory,
+    getStoryStyles,
+    getStoryThemes,
+    getRecommendation,
+    deleteStory,
+    setCurrentStory,
+    setError
   };
 };
