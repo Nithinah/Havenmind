@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   BookOpen, Sparkles, Clock, RefreshCw, 
@@ -76,14 +76,7 @@ const StoryWeaver = ({ sessionId }) => {
     { id: 'discovering_inner_wisdom', name: 'Discovering Inner Wisdom', description: 'Trusting your inner knowledge' }
   ];
 
-  useEffect(() => {
-    if (sessionId) {
-      loadStoryHistory();
-      loadRecommendation();
-    }
-  }, [sessionId, loadStoryHistory, loadRecommendation]); // Added missing dependencies
-
-  // You'll need to wrap these functions with useCallback:
+  // Wrap functions with useCallback
   const loadStoryHistory = useCallback(async () => {
     try {
       const history = await getStoryHistory();
@@ -101,6 +94,13 @@ const StoryWeaver = ({ sessionId }) => {
       console.error('Error loading recommendation:', error);
     }
   }, [getRecommendation]);
+
+  useEffect(() => {
+    if (sessionId) {
+      loadStoryHistory();
+      loadRecommendation();
+    }
+  }, [sessionId, loadStoryHistory, loadRecommendation]);
 
   const handleGenerateStory = async () => {
     if (!selectedStyle) {

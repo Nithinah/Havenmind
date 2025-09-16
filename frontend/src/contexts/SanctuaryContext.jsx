@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useReducer, useEffect } from 'react';
+import React, { createContext, useContext, useReducer, useEffect, useCallback } from 'react';
 import { sanctuaryService } from '../services/sanctuary.js';
 
 const SanctuaryContext = createContext();
@@ -47,7 +47,7 @@ const initialState = {
 export const SanctuaryProvider = ({ children, userId }) => {
   const [state, dispatch] = useReducer(sanctuaryReducer, initialState);
 
-  const loadSanctuary = async () => {
+  const loadSanctuary = useCallback(async () => {
     if (!userId) return;
     
     dispatch({ type: 'SET_LOADING', payload: true });
@@ -61,9 +61,9 @@ export const SanctuaryProvider = ({ children, userId }) => {
     } catch (error) {
       dispatch({ type: 'SET_ERROR', payload: error.message });
     }
-  };
+  }, [userId]);
 
-  const updateMood = async (mood, intensity) => {
+  const updateMood = useCallback(async (mood, intensity) => {
     if (!state.sanctuary) return;
     
     try {
@@ -72,9 +72,9 @@ export const SanctuaryProvider = ({ children, userId }) => {
     } catch (error) {
       dispatch({ type: 'SET_ERROR', payload: error.message });
     }
-  };
+  }, [state.sanctuary]);
 
-  const getCompanionMessage = async (emotion, context) => {
+  const getCompanionMessage = useCallback(async (emotion, context) => {
     try {
       const response = await sanctuaryService.getCompanionMessage(emotion, context);
       const message = {
@@ -89,14 +89,11 @@ export const SanctuaryProvider = ({ children, userId }) => {
       dispatch({ type: 'SET_ERROR', payload: error.message });
       return null;
     }
-  };
+  }, []);
 
   useEffect(() => {
     loadSanctuary();
-  }, [loadSanctuary]); // Added missing dependency
-
-// You'll need to wrap loadSanctuary with useCallback:
-
+  }, [loadSanctuary]);
 
   const value = {
     ...state,

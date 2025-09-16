@@ -16,6 +16,50 @@ const SanctuaryCanvas = ({
   const [hoveredElement, setHoveredElement] = useState(null);
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
 
+  // Initialize ambient particles - MOVED BEFORE useEffect
+  const initializeParticles = useCallback(() => {
+    particlesRef.current = [];
+    for (let i = 0; i < 20; i++) {
+      particlesRef.current.push({
+        x: Math.random() * canvasSize.width,
+        y: Math.random() * canvasSize.height,
+        vx: (Math.random() - 0.5) * 0.5,
+        vy: (Math.random() - 0.5) * 0.5,
+        size: Math.random() * 2 + 1,
+        opacity: Math.random() * 0.3 + 0.1,
+        color: `hsl(${Math.random() * 60 + 200}, 50%, 70%)`
+      });
+    }
+  }, [canvasSize.width, canvasSize.height]);
+
+  // Main drawing function - MOVED BEFORE useEffect
+  const draw = useCallback(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    const ctx = canvas.getContext('2d');
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    // Draw background gradient
+    drawBackground(ctx);
+
+    // Draw ambient particles
+    drawParticles(ctx);
+
+    // Draw sanctuary elements
+    elements.forEach((element, index) => {
+      drawSanctuaryElement(ctx, element, index);
+    });
+
+    // Draw hover effects
+    if (hoveredElement) {
+      drawHoverEffect(ctx, hoveredElement);
+    }
+
+    // Draw cursor effect
+    drawCursorEffect(ctx);
+  }, [elements, hoveredElement, mousePos, canvasSize]);
+
   // Initialize canvas and particles
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -44,23 +88,7 @@ const SanctuaryCanvas = ({
         cancelAnimationFrame(animationRef.current);
       }
     };
-  }, [initializeParticles]); // Added missing dependency
-
-  // Initialize ambient particles
-  const initializeParticles = () => {
-    particlesRef.current = [];
-    for (let i = 0; i < 20; i++) {
-      particlesRef.current.push({
-        x: Math.random() * canvasSize.width,
-        y: Math.random() * canvasSize.height,
-        vx: (Math.random() - 0.5) * 0.5,
-        vy: (Math.random() - 0.5) * 0.5,
-        size: Math.random() * 2 + 1,
-        opacity: Math.random() * 0.3 + 0.1,
-        color: `hsl(${Math.random() * 60 + 200}, 50%, 70%)`
-      });
-    }
-  };
+  }, [initializeParticles]);
 
   // Animation loop
   useEffect(() => {
@@ -75,36 +103,7 @@ const SanctuaryCanvas = ({
         cancelAnimationFrame(animationRef.current);
       }
     };
-  }, [elements, hoveredElement, mousePos, canvasSize, draw]);
-
-  // Main drawing function
-  const draw = () => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-
-    const ctx = canvas.getContext('2d');
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-    // Draw background gradient
-    drawBackground(ctx);
-
-    // Draw ambient particles
-    drawParticles(ctx);
-
-    // Draw sanctuary elements
-    elements.forEach((element, index) => {
-      drawSanctuaryElement(ctx, element, index);
-    });
-
-    // Draw hover effects
-    if (hoveredElement) {
-      drawHoverEffect(ctx, hoveredElement);
-    }
-
-    // Draw cursor effect
-    drawCursorEffect(ctx);
-  };
-
+  }, [draw]);
 
   const drawBackground = (ctx) => {
     // Gradient background

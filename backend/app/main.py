@@ -1,6 +1,7 @@
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+from fastapi.middleware.trustedhost import TrustedHostMiddleware
 import logging
 import uvicorn
 
@@ -24,15 +25,31 @@ app = FastAPI(
     redoc_url="/redoc" if settings.DEBUG else None
 )
 
-# Configure CORS - This fixes the OPTIONS 400 Bad Request errors
+# Enhanced CORS configuration - This fixes the OPTIONS 400 Bad Request errors
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=settings.CORS_ORIGINS,
-    allow_credentials=True,
-    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],  # Added OPTIONS
-    allow_headers=["*"],
+    allow_origins=settings.CORS_ORIGINS + ["http://localhost:3001", "http://127.0.0.1:3001"],  # Added frontend port
+    allow_credentials=False,  # Changed to False since we're not using credentials
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS", "HEAD", "PATCH"],
+    allow_headers=[
+        "Accept",
+        "Accept-Language", 
+        "Content-Language",
+        "Content-Type",
+        "Authorization",
+        "X-Requested-With",
+        "Origin",
+        "Access-Control-Request-Method",
+        "Access-Control-Request-Headers",
+    ],
     expose_headers=["*"],
     max_age=86400,  # Cache preflight requests for 24 hours
+)
+
+# Add trusted host middleware for security
+app.add_middleware(
+    TrustedHostMiddleware,
+    allowed_hosts=["localhost", "127.0.0.1", "0.0.0.0"] if settings.DEBUG else ["yourdomain.com"]
 )
 
 # Include routers
@@ -87,20 +104,47 @@ async def global_exception_handler(request, exc):
         content={
             "detail": "Internal server error",
             "type": "internal_error"
-        }
-    )
-
-# Add preflight OPTIONS handler for all routes
-@app.options("/{full_path:path}")
-async def options_handler(full_path: str):
-    """Handle preflight OPTIONS requests."""
-    return JSONResponse(
-        status_code=200,
-        content={},
+        },
         headers={
             "Access-Control-Allow-Origin": "*",
             "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
             "Access-Control-Allow-Headers": "*",
+        }
+    )
+
+@app.middleware("http")
+async def add_cors_headers(request, call_next):
+    """Add CORS headers to all responses."""
+    response = await call_next(request)
+    
+    # Add CORS headers to all responses
+    origin = request.headers.get("origin")
+    if origin and (origin in settings.CORS_ORIGINS or 
+                  origin in ["http://localhost:3001", "http://127.0.0.1:3001"] or
+                  settings.DEBUG):
+        response.headers["Access-Control-Allow-Origin"] = origin
+    elif settings.DEBUG:
+        response.headers["Access-Control-Allow-Origin"] = "*"
+    
+    response.headers["Access-Control-Allow-Credentials"] = "false"
+    response.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, OPTIONS, HEAD, PATCH"
+    response.headers["Access-Control-Allow-Headers"] = "*"
+    response.headers["Access-Control-Max-Age"] = "86400"
+    
+    return response
+
+# Explicit OPTIONS handler for all routes
+@app.options("/{path:path}")
+async def handle_options(path: str):
+    """Handle preflight OPTIONS requests for all paths."""
+    return JSONResponse(
+        status_code=200,
+        content={},
+        headers={
+            "Access-Control-Allow-Origin": "*" if settings.DEBUG else "null",
+            "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS, HEAD, PATCH",
+            "Access-Control-Allow-Headers": "*",
+            "Access-Control-Max-Age": "86400",
         }
     )
 

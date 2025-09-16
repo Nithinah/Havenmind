@@ -1,4 +1,4 @@
-import React, { useState, useEffect, Suspense } from 'react';
+import React, { useState, useEffect, Suspense, useCallback } from 'react';
 import './App.css';
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -47,8 +47,6 @@ function AppContent() {
     }
   }, [location]);
 
-  
-
   // Initialize session
   useEffect(() => {
     if (!sessionId) {
@@ -58,40 +56,39 @@ function AppContent() {
     }
   }, [sessionId, setSessionId]);
 
-  // Handle keyboard shortcuts
-  useEffect(() => {
-    const handleKeyDown = (e) => {
-      if (e.metaKey || e.ctrlKey) {
-        switch (e.key) {
-          case '1':
-            e.preventDefault();
-            window.location.hash = '#/sanctuary';
-            break;
-          case '2':
-            e.preventDefault();
-            window.location.hash = '#/story';
-            break;
-          case '3':
-            e.preventDefault();
-            window.location.hash = '#/skills';
-            break;
-          case 'd':
-            e.preventDefault();
-            if (activeView === 'sanctuary') {
-              setIs3DMode(!is3DMode);
-              toast.success(is3DMode ? 'Switched to 2D view' : 'Switched to 3D view');
-            }
-            break;
-          default:
-            // Added default case to fix warning
-            break;
-        }
+  // Handle keyboard shortcuts with proper dependencies
+  const handleKeyDown = useCallback((e) => {
+    if (e.metaKey || e.ctrlKey) {
+      switch (e.key) {
+        case '1':
+          e.preventDefault();
+          window.location.hash = '#/sanctuary';
+          break;
+        case '2':
+          e.preventDefault();
+          window.location.hash = '#/story';
+          break;
+        case '3':
+          e.preventDefault();
+          window.location.hash = '#/skills';
+          break;
+        case 'd':
+          e.preventDefault();
+          if (activeView === 'sanctuary') {
+            setIs3DMode(prev => !prev);
+            toast.success(is3DMode ? 'Switched to 2D view' : 'Switched to 3D view');
+          }
+          break;
+        default:
+          break;
       }
-    };
+    }
+  }, [activeView, is3DMode]);
 
+  useEffect(() => {
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [activeView, is3DMode]);
+  }, [handleKeyDown]);
 
   // Handle window resize
   useEffect(() => {
