@@ -10,21 +10,71 @@
   display: flex;
   min-height: 100vh;
   transition: all 0.3s ease;
+  position: relative;
+}
+
+.app-layout.sidebar-dragging {
+  user-select: none;
+  cursor: ew-resize;
+}
+
+.app-layout.sidebar-dragging * {
+  pointer-events: none;
+}
+
+.app-layout.sidebar-dragging .sidebar-drag-handle {
+  pointer-events: auto;
 }
 
 /* Sidebar Styles */
 .app-sidebar {
-  width: 380px;
+  position: relative;
   background: rgba(255, 255, 255, 0.95);
   backdrop-filter: blur(20px);
   border-right: 1px solid rgba(255, 255, 255, 0.2);
   transition: all 0.3s ease;
   overflow: hidden;
   z-index: 1000;
+  flex-shrink: 0;
 }
 
 .app-layout.sidebar-collapsed .app-sidebar {
-  width: 80px;
+  width: 80px !important;
+}
+
+/* Sidebar Drag Handle */
+.sidebar-drag-handle {
+  position: absolute;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  width: 4px;
+  cursor: ew-resize;
+  z-index: 1001;
+  background: transparent;
+  transition: background-color 0.2s ease;
+}
+
+.sidebar-drag-handle:hover {
+  background: rgba(99, 102, 241, 0.3);
+}
+
+.sidebar-drag-handle:hover::after {
+  opacity: 1;
+}
+
+.sidebar-drag-handle::after {
+  content: '';
+  position: absolute;
+  right: -2px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 8px;
+  height: 40px;
+  background: rgba(99, 102, 241, 0.6);
+  border-radius: 4px;
+  opacity: 0;
+  transition: opacity 0.2s ease;
 }
 
 /* Main Content Styles */
@@ -34,6 +84,7 @@
   flex-direction: column;
   overflow: hidden;
   position: relative;
+  transition: margin-left 0.3s ease;
 }
 
 .view-container {
@@ -221,6 +272,7 @@
   
   .app-main {
     padding-bottom: 80px; /* Space for mobile nav */
+    margin-left: 0 !important;
   }
   
   .mobile-nav {
@@ -228,6 +280,10 @@
   }
   
   .keyboard-shortcuts {
+    display: none;
+  }
+
+  .sidebar-drag-handle {
     display: none;
   }
 }
@@ -268,6 +324,10 @@
     background: #000000;
     color: #ffffff;
   }
+
+  .sidebar-drag-handle {
+    background: #000000;
+  }
 }
 
 /* Reduced motion */
@@ -276,9 +336,15 @@
   .app-sidebar,
   .mobile-nav .nav-item,
   .app-error button,
+  .app-main,
   * {
     transition: none !important;
     animation: none !important;
+  }
+
+  .mobile-nav .nav-item:hover,
+  .app-error button:hover {
+    transform: none;
   }
 }
 
@@ -301,6 +367,10 @@
   .keyboard-shortcuts details {
     background: rgba(255, 255, 255, 0.1);
   }
+
+  .sidebar-drag-handle:hover {
+    background: rgba(99, 102, 241, 0.4);
+  }
 }
 
 /* Print styles */
@@ -311,12 +381,14 @@
   
   .app-sidebar,
   .mobile-nav,
-  .keyboard-shortcuts {
+  .keyboard-shortcuts,
+  .sidebar-drag-handle {
     display: none !important;
   }
   
   .app-main {
     padding: 0 !important;
+    margin-left: 0 !important;
   }
   
   .view-container {
@@ -332,6 +404,11 @@
 }
 
 .mobile-nav .nav-item:focus {
+  outline: 2px solid #6366f1;
+  outline-offset: 2px;
+}
+
+.sidebar-drag-handle:focus {
   outline: 2px solid #6366f1;
   outline-offset: 2px;
 }
@@ -389,4 +466,32 @@
 
 .app-main::-webkit-scrollbar-thumb:hover {
   background: rgba(255, 255, 255, 0.5);
+}
+
+/* Dragging cursor states */
+.app-layout.sidebar-dragging .sidebar-drag-handle {
+  background: rgba(99, 102, 241, 0.7) !important;
+}
+
+.app-layout.sidebar-dragging .sidebar-drag-handle::after {
+  opacity: 1 !important;
+  background: rgba(99, 102, 241, 0.9) !important;
+}
+
+/* Smooth transitions for sidebar resizing */
+.app-sidebar:not(.dragging) {
+  transition: width 0.3s ease;
+}
+
+.app-main:not(.dragging) {
+  transition: margin-left 0.3s ease;
+}
+
+/* Enhanced hover states */
+.sidebar-drag-handle:hover {
+  background: rgba(99, 102, 241, 0.4);
+}
+
+.sidebar-drag-handle:active {
+  background: rgba(99, 102, 241, 0.6);
 }

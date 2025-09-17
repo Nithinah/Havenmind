@@ -1,10 +1,9 @@
-import React, { Suspense, useMemo, useRef, useState } from 'react';
+import React, { Suspense, useMemo, useRef, useState, useEffect } from 'react';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import { OrbitControls, Text, Float, Stars } from '@react-three/drei';
 import { motion } from 'framer-motion';
 import * as THREE from 'three';
 import './Sanctuary3D.css';
-
 
 // Individual 3D Element Component
 const SanctuaryElement3D = ({ element, onClick }) => {
@@ -205,9 +204,63 @@ const Scene3D = ({ elements, onElementClick }) => {
 };
 
 // Main Component
-const Sanctuary3D = ({ sessionId, elements = [], onElementClick }) => {
-  const [isLoading] = useState(false);
+const Sanctuary3D = ({ sessionId, onElementClick }) => {
+  const [elements, setElements] = useState([]);
+  const [isLoading, setIsLoading] = useState(false);
   const [showControls, setShowControls] = useState(true);
+
+  // Mock data for demonstration - replace with actual data from useSanctuary hook
+  useEffect(() => {
+    // Simulate loading elements from 2D sanctuary
+    const mockElements = [
+      {
+        id: 1,
+        element_type: 'flower',
+        x_position: 200,
+        y_position: 150,
+        size: 1.2,
+        color: '#ff6b9d',
+        emotion: 'joy',
+        sentiment_score: 0.8,
+        created_at: new Date().toISOString()
+      },
+      {
+        id: 2,
+        element_type: 'tree',
+        x_position: 600,
+        y_position: 400,
+        size: 1.5,
+        color: '#4ecdc4',
+        emotion: 'peace',
+        sentiment_score: 0.6,
+        created_at: new Date().toISOString()
+      },
+      {
+        id: 3,
+        element_type: 'crystal',
+        x_position: 300,
+        y_position: 300,
+        size: 1.0,
+        color: '#a8e6cf',
+        emotion: 'clarity',
+        sentiment_score: 0.7,
+        created_at: new Date().toISOString()
+      },
+      {
+        id: 4,
+        element_type: 'butterfly',
+        x_position: 500,
+        y_position: 200,
+        size: 0.8,
+        color: '#ffd93d',
+        emotion: 'freedom',
+        sentiment_score: 0.9,
+        created_at: new Date().toISOString()
+      }
+    ];
+    
+    setElements(mockElements);
+  }, [sessionId]);
 
   return (
     <div className="sanctuary-3d-container">

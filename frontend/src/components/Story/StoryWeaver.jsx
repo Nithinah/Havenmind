@@ -5,7 +5,8 @@ import {
   Heart, Lightbulb, Compass, Star, 
   Play, Pause, Download, Share2, 
   Plus, Edit3, Save, ChevronRight,
-  GripVertical, Type, Palette
+  GripVertical, Type, Palette,
+  User, Bot, X
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import './StoryWeaver.css';
@@ -20,8 +21,8 @@ const StoryWeaver = ({ sessionId }) => {
   const [recommendation, setRecommendation] = useState(null);
   const [storyMode, setStoryMode] = useState('select'); // select, building, complete
   const [leftPanelWidth, setLeftPanelWidth] = useState(35); // Percentage
-  const [isPlaying, setIsPlaying] = useState(false);
-  const [currentSegmentIndex, setCurrentSegmentIndex] = useState(0);
+  const [isResizing, setIsResizing] = useState(false);
+  const [currentChoices, setCurrentChoices] = useState([]);
   
   const resizeRef = useRef(null);
   const containerRef = useRef(null);
@@ -82,9 +83,31 @@ const StoryWeaver = ({ sessionId }) => {
     { id: 'discovering_inner_wisdom', name: 'Discovering Inner Wisdom', description: 'Trusting your inner knowledge' }
   ];
 
+  // Load recommendation on mount
+  useEffect(() => {
+    if (sessionId) {
+      loadRecommendation();
+    }
+  }, [sessionId]);
+
+  const loadRecommendation = async () => {
+    try {
+      // Simulate API call for recommendation
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      setRecommendation({
+        recommended_style: 'fairy_tale',
+        recommended_theme: 'transformation_and_growth',
+        reason: 'Based on your recent journal entries showing growth and positive transformation, a fairy tale about personal evolution would be perfect for you right now.'
+      });
+    } catch (error) {
+      console.error('Failed to load recommendation:', error);
+    }
+  };
+
   // Handle resizing
   const handleMouseDown = useCallback((e) => {
     e.preventDefault();
+    setIsResizing(true);
     const startX = e.clientX;
     const startWidth = leftPanelWidth;
     const containerWidth = containerRef.current?.offsetWidth || 1000;
@@ -97,6 +120,7 @@ const StoryWeaver = ({ sessionId }) => {
     };
 
     const handleMouseUp = () => {
+      setIsResizing(false);
       document.removeEventListener('mousemove', handleMouseMove);
       document.removeEventListener('mouseup', handleMouseUp);
     };
@@ -105,7 +129,7 @@ const StoryWeaver = ({ sessionId }) => {
     document.addEventListener('mouseup', handleMouseUp);
   }, [leftPanelWidth]);
 
-  // Generate story opening
+  // Generate story opening with choices
   const handleGenerateOpening = async () => {
     if (!selectedStyle || !selectedTheme) {
       toast.error('Please select both a style and theme');
@@ -128,8 +152,9 @@ const StoryWeaver = ({ sessionId }) => {
       
       setCurrentStory(storyData);
       setStorySegments([opening]);
+      setCurrentChoices(opening.choices || []);
       setStoryMode('building');
-      toast.success('Story opening created! Now build your narrative.');
+      toast.success('Story opening created! Choose your path or add your own twist.');
     } catch (error) {
       console.error('Error generating story:', error);
       toast.error('Unable to generate story opening. Please try again.');
@@ -143,42 +168,42 @@ const StoryWeaver = ({ sessionId }) => {
     const openings = {
       allegory: {
         title: "The Journey Within",
-        content: "In a realm where thoughts take shape and emotions paint the sky, a traveler stood at the crossroads of possibility. The path ahead shimmered with potential, each step waiting to be written...",
+        content: "In a realm where thoughts take shape and emotions paint the sky, a traveler stood at the crossroads of possibility. The path ahead shimmered with potential, each step waiting to be written by the choices of the heart...",
         choices: [
-          "The traveler chose the path of courage, where golden light beckoned...",
-          "The traveler turned toward the misty path of reflection, where wisdom whispered..."
+          "The traveler chose the path of courage, where golden light beckoned through ancient trees...",
+          "The traveler turned toward the misty path of reflection, where wisdom whispered in the wind..."
         ]
       },
       fairy_tale: {
         title: "The Enchanted Beginning",
-        content: "Once upon a time, in a kingdom where magic lived in every heartbeat, there dwelt a soul seeking transformation. The enchanted forest ahead held two doorways, each promising a different adventure...",
+        content: "Once upon a time, in a kingdom where magic lived in every heartbeat, there dwelt a soul seeking transformation. The enchanted forest ahead held two doorways, each shimmering with its own unique promise...",
         choices: [
-          "Through the crystal door, where fairy lights danced with hope...",
-          "Through the oak door, where ancient wisdom slumbered peacefully..."
+          "Through the crystal door, where fairy lights danced with hope and new beginnings...",
+          "Through the oak door, where ancient wisdom and gentle strength waited peacefully..."
         ]
       },
       meditation: {
         title: "The Sacred Pause",
-        content: "In the stillness between breaths, in the space between thoughts, a gentle awareness bloomed. Like a lotus opening to the dawn, the moment held infinite possibilities...",
+        content: "In the stillness between breaths, in the space between thoughts, a gentle awareness bloomed. Like a lotus opening to the dawn, this moment held infinite possibilities for peace and understanding...",
         choices: [
-          "Following the breath into deeper stillness...",
-          "Embracing the awareness that flows like a gentle river..."
+          "Following the breath deeper into stillness, where clarity awaits...",
+          "Embracing the awareness that flows like a gentle river of consciousness..."
         ]
       },
       adventure: {
         title: "The Call to Adventure",
-        content: "The morning sun painted the horizon with promise as our hero prepared for the journey ahead. With a heart full of determination and a spirit ready for discovery, the adventure was about to begin...",
+        content: "The morning sun painted the horizon with promise as our hero prepared for the journey ahead. With a heart full of determination and a spirit ready for discovery, two paths stretched into the distance...",
         choices: [
-          "Setting forth on the mountain path where challenges await...",
-          "Choosing the river route where flow and adaptability guide the way..."
+          "Taking the mountain path where challenges build character and strength...",
+          "Choosing the river route where flow and adaptability guide the journey..."
         ]
       },
       wisdom: {
         title: "Ancient Teachings",
-        content: "The old teacher smiled knowingly, gesturing toward the ancient scroll that held the wisdom of ages. 'Every story,' they said, 'begins with a choice between two truths...'",
+        content: "The old teacher smiled knowingly, gesturing toward the ancient scroll that held the wisdom of ages. 'Every story,' they said, 'begins with a choice between two truths that will shape the journey ahead...'",
         choices: [
-          "The truth of action, where wisdom is found through doing...",
-          "The truth of stillness, where wisdom emerges through being..."
+          "The truth of action, where wisdom is found through doing and experience...",
+          "The truth of stillness, where wisdom emerges through patience and being..."
         ]
       }
     };
@@ -186,42 +211,32 @@ const StoryWeaver = ({ sessionId }) => {
     return {
       id: Date.now(),
       type: 'opening',
-      ...openings[style],
       author: 'AI',
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
+      ...openings[style]
     };
   };
 
-  // Continue story with AI or user input
-  const handleContinueStory = async (choice = null, userText = null) => {
+  // Continue story with AI choice
+  const handleChoiceSelect = async (choice) => {
     setIsGenerating(true);
     try {
-      // Simulate API call
       await new Promise(resolve => setTimeout(resolve, 1500));
       
-      let newSegment;
-      if (userText) {
-        newSegment = {
-          id: Date.now(),
-          type: 'user',
-          content: userText,
-          author: 'You',
-          timestamp: new Date().toISOString()
-        };
-      } else if (choice) {
-        newSegment = {
-          id: Date.now(),
-          type: 'continuation',
-          content: choice,
-          author: 'AI',
-          timestamp: new Date().toISOString(),
-          choices: generateNextChoices()
-        };
-      }
+      const continuation = {
+        id: Date.now(),
+        type: 'continuation',
+        content: choice,
+        author: 'AI',
+        timestamp: new Date().toISOString()
+      };
+
+      // Generate next choices
+      const nextChoices = generateNextChoices();
+      setCurrentChoices(nextChoices);
       
-      setStorySegments(prev => [...prev, newSegment]);
-      setUserInput('');
-      toast.success('Story continued!');
+      setStorySegments(prev => [...prev, continuation]);
+      toast.success('Story continued! What happens next?');
     } catch (error) {
       toast.error('Error continuing story');
     } finally {
@@ -229,110 +244,233 @@ const StoryWeaver = ({ sessionId }) => {
     }
   };
 
-  // Generate next choices
-  const generateNextChoices = () => {
-    const choices = [
-      "The path led to an unexpected discovery...",
-      "A wise companion appeared with guidance...",
-      "The character faced an internal challenge...",
-      "A moment of clarity changed everything..."
-    ];
-    return choices.slice(0, 2);
-  };
-
-  // Download story
-  const handleDownloadStory = () => {
-    if (!currentStory || storySegments.length === 0) {
-      toast.error('No story to download');
+  // Add user input to story
+  const handleAddUserInput = async () => {
+    if (!userInput.trim()) {
+      toast.error('Please write something to add to the story');
       return;
     }
 
-    const storyText = `${currentStory.title}\n\n${storySegments.map(segment => 
-      `${segment.author === 'You' ? '[Your Addition]' : ''}\n${segment.content}\n`
-    ).join('\n')}\n\n---\nCreated with HavenMind\nStyle: ${selectedStyle}\nTheme: ${selectedTheme}`;
+    setIsGenerating(true);
+    try {
+      const userSegment = {
+        id: Date.now(),
+        type: 'user',
+        content: userInput.trim(),
+        author: 'You',
+        timestamp: new Date().toISOString()
+      };
+
+      setStorySegments(prev => [...prev, userSegment]);
+      setUserInput('');
+
+      // Generate AI response to user input
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      const aiResponse = {
+        id: Date.now() + 1,
+        type: 'ai_response',
+        content: generateAIResponse(userInput),
+        author: 'AI',
+        timestamp: new Date().toISOString()
+      };
+
+      setStorySegments(prev => [...prev, aiResponse]);
+      setCurrentChoices(generateNextChoices());
+      
+      toast.success('Your contribution added to the story!');
+    } catch (error) {
+      toast.error('Error adding your input');
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
+  // Generate AI response to user input
+  const generateAIResponse = (userInput) => {
+    const responses = [
+      `Building on your idea, the story took an unexpected turn as ${userInput.toLowerCase()}... The characters found themselves facing new possibilities.`,
+      `Your vision sparked something magical. As ${userInput.toLowerCase()}, the narrative began to weave itself into something even more meaningful.`,
+      `The story embraced your creative touch. With ${userInput.toLowerCase()}, new pathways of healing and growth opened up.`,
+      `Your contribution illuminated the path forward. The tale continued as ${userInput.toLowerCase()}, revealing deeper truths.`
+    ];
+    return responses[Math.floor(Math.random() * responses.length)];
+  };
+
+  // Generate next choices
+  const generateNextChoices = () => {
+    const choiceTemplates = [
+      "The character discovered an unexpected ally who offered guidance...",
+      "A moment of quiet reflection revealed a hidden strength...",
+      "The path led to a beautiful clearing where healing could begin...",
+      "An ancient symbol appeared, pointing toward transformation...",
+      "The character found a letter that changed everything...",
+      "A wise creature appeared with a riddle to solve...",
+      "The journey took them to a place of deep peace...",
+      "A challenge arose that would test their newfound wisdom..."
+    ];
     
-    const blob = new Blob([storyText], { type: 'text/plain' });
+    const shuffled = choiceTemplates.sort(() => Math.random() - 0.5);
+    return shuffled.slice(0, 2);
+  };
+
+  // Download story with clean format
+
+  const handleDownloadStory = () => {
+
+    if (!currentStory || storySegments.length === 0) {
+
+      toast.error('No story to download');
+
+      return;
+
+    }
+
+
+
+    // Create clean story format without AI/User labels
+
+    let cleanStoryText = `${currentStory.title}\n\n`;
+
+    
+
+    storySegments.forEach((segment, index) => {
+
+      // Remove labels and create flowing narrative
+
+      let content = segment.content;
+
+      
+
+      // Clean up any remaining labels
+
+      content = content.replace(/\[AI Generated\]/gi, '');
+
+      content = content.replace(/\[Your Addition\]/gi, '');
+
+      content = content.replace(/Building on your idea,?/gi, '');
+
+      content = content.replace(/then max enters the hall/gi, 'Then Max enters the hall');
+
+      
+
+      // Add proper paragraph breaks
+
+      if (index > 0) {
+
+        cleanStoryText += '\n\n';
+
+      }
+
+      
+
+      cleanStoryText += content.trim();
+
+    });
+
+    
+
+    // Add story metadata
+
+    cleanStoryText += `\n\n\n---\nCreated with HavenMind Story Weaver\nStyle: ${selectedStyle.replace('_', ' ')}\nTheme: ${storyThemes.find(t => t.id === selectedTheme)?.name || selectedTheme}\nCreated: ${new Date().toLocaleDateString()}`;
+
+    
+
+    const blob = new Blob([cleanStoryText], { type: 'text/plain;charset=utf-8' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
     link.download = `${currentStory.title.replace(/[^a-z0-9]/gi, '_').toLowerCase()}.txt`;
     link.click();
     URL.revokeObjectURL(url);
-    toast.success('Story downloaded!');
+    toast.success('Story downloaded successfully!');
   };
 
   // Share story
   const handleShareStory = async () => {
+    if (!currentStory) {
+      toast.error('No story to share');
+      return;
+    }
+
     try {
       const shareData = {
-        title: currentStory?.title || 'My HavenMind Story',
-        text: `I've been building a therapeutic story: "${currentStory?.title}". Join me in this journey of healing through storytelling.`,
+        title: `My HavenMind Story: ${currentStory.title}`,
+        text: `I've been building a therapeutic story called "${currentStory.title}". Join me in this journey of healing through storytelling with HavenMind.`,
         url: window.location.href
       };
 
       if (navigator.share && navigator.canShare(shareData)) {
         await navigator.share(shareData);
-        toast.success('Story shared!');
+        toast.success('Story shared successfully!');
       } else {
-        await navigator.clipboard.writeText(shareData.text);
-        toast.success('Story details copied to clipboard!');
+        await navigator.clipboard.writeText(shareData.text + ' ' + shareData.url);
+        toast.success('Story link copied to clipboard!');
       }
     } catch (error) {
       toast.error('Unable to share story');
     }
   };
 
-  // Auto-play story
-  const handleAutoPlay = () => {
-    setIsPlaying(!isPlaying);
-    if (!isPlaying && storySegments.length > 0) {
-      // Start auto-play logic here
-      toast.info('Auto-play started');
-    }
+  // Reset story
+  const handleNewStory = () => {
+    setStoryMode('select');
+    setCurrentStory(null);
+    setStorySegments([]);
+    setCurrentChoices([]);
+    setUserInput('');
+    setSelectedStyle('');
+    setSelectedTheme('');
+    toast.success('Ready to create a new story!');
   };
 
   return (
     <div className="story-weaver" ref={containerRef}>
       <div className="story-weaver-header">
         <div className="header-content">
-          <h2>Interactive Story Builder</h2>
+          <h2>Interactive Story Weaver</h2>
           <p>Collaborate with AI to build therapeutic stories that evolve with your journey</p>
         </div>
         
         <div className="header-actions">
           {storyMode === 'building' && (
             <>
-              <button className="action-btn" onClick={handleAutoPlay}>
-                {isPlaying ? <Pause size={16} /> : <Play size={16} />}
-                {isPlaying ? 'Pause' : 'Auto-play'}
-              </button>
               <button className="action-btn" onClick={handleShareStory}>
                 <Share2 size={16} />
-                Share
+                Share Story
               </button>
               <button className="action-btn" onClick={handleDownloadStory}>
                 <Download size={16} />
                 Download
+              </button>
+              <button className="action-btn" onClick={handleNewStory}>
+                <Edit3 size={16} />
+                New Story
               </button>
             </>
           )}
         </div>
       </div>
 
-      <div className="story-content" style={{ display: 'flex', height: 'calc(100vh - 120px)' }}>
+      <div className="story-content">
         {/* Left Panel - Controls */}
         <div 
           className="story-controls-panel" 
-          style={{ width: `${leftPanelWidth}%`, minWidth: '300px' }}
+          style={{ width: `${leftPanelWidth}%` }}
         >
           {storyMode === 'select' && (
             <div className="story-setup">
               {/* Recommendation Card */}
               {recommendation && (
-                <motion.div className="recommendation-card">
+                <motion.div 
+                  className="recommendation-card"
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.3 }}
+                >
                   <div className="recommendation-header">
                     <Sparkles size={16} />
-                    <span>Recommended for you</span>
+                    <span>Recommended for You</span>
                   </div>
                   <div className="recommendation-content">
                     <div className="recommendation-suggestion">
@@ -349,7 +487,7 @@ const StoryWeaver = ({ sessionId }) => {
                         toast.success('Applied recommended settings');
                       }}
                     >
-                      Use This Suggestion
+                      Use This Combination
                     </button>
                   </div>
                 </motion.div>
@@ -359,13 +497,16 @@ const StoryWeaver = ({ sessionId }) => {
               <div className="control-section">
                 <h3>Choose Your Story Style</h3>
                 <div className="style-grid">
-                  {storyStyles.map(style => {
+                  {storyStyles.map((style, index) => {
                     const Icon = style.icon;
                     return (
                       <motion.div
                         key={style.id}
                         className={`style-card ${selectedStyle === style.id ? 'selected' : ''}`}
                         onClick={() => setSelectedStyle(style.id)}
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: index * 0.1 }}
                         whileHover={{ y: -2 }}
                         whileTap={{ scale: 0.98 }}
                       >
@@ -388,14 +529,14 @@ const StoryWeaver = ({ sessionId }) => {
 
               {/* Theme Selection */}
               <div className="control-section">
-                <h3>Select a Theme</h3>
+                <h3>Select a Healing Theme</h3>
                 <div className="theme-selector">
                   <select 
                     value={selectedTheme}
                     onChange={(e) => setSelectedTheme(e.target.value)}
                     className="theme-select"
                   >
-                    <option value="">Choose a theme...</option>
+                    <option value="">Choose a therapeutic theme...</option>
                     {storyThemes.map(theme => (
                       <option key={theme.id} value={theme.id}>
                         {theme.name}
@@ -403,9 +544,13 @@ const StoryWeaver = ({ sessionId }) => {
                     ))}
                   </select>
                   {selectedTheme && (
-                    <p className="selected-theme-description">
+                    <motion.p 
+                      className="selected-theme-description"
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                    >
                       {storyThemes.find(t => t.id === selectedTheme)?.description}
-                    </p>
+                    </motion.p>
                   )}
                 </div>
               </div>
@@ -415,18 +560,18 @@ const StoryWeaver = ({ sessionId }) => {
                 className="generate-button"
                 onClick={handleGenerateOpening}
                 disabled={isGenerating || !selectedStyle || !selectedTheme}
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
+                whileHover={{ scale: isGenerating ? 1 : 1.02 }}
+                whileTap={{ scale: isGenerating ? 1 : 0.98 }}
               >
                 {isGenerating ? (
                   <>
                     <RefreshCw size={16} className="spin" />
-                    <span>Creating opening...</span>
+                    <span>Weaving your story...</span>
                   </>
                 ) : (
                   <>
                     <Sparkles size={16} />
-                    <span>Begin Story</span>
+                    <span>Weave Story</span>
                   </>
                 )}
               </motion.button>
@@ -435,7 +580,7 @@ const StoryWeaver = ({ sessionId }) => {
 
           {storyMode === 'building' && (
             <div className="story-building-controls">
-              <h3>Continue Your Story</h3>
+              <h3>Continue Your Journey</h3>
               
               {/* User Input */}
               <div className="user-input-section">
@@ -443,13 +588,14 @@ const StoryWeaver = ({ sessionId }) => {
                 <textarea
                   value={userInput}
                   onChange={(e) => setUserInput(e.target.value)}
-                  placeholder="Add your own narrative, thoughts, or direction to the story..."
+                  placeholder="Add your own narrative, thoughts, or direction to the story. What happens next? How does the character feel? What do they discover?"
                   rows={4}
                   className="user-input"
+                  disabled={isGenerating}
                 />
                 <button 
                   className="add-user-content"
-                  onClick={() => handleContinueStory(null, userInput)}
+                  onClick={handleAddUserInput}
                   disabled={!userInput.trim() || isGenerating}
                 >
                   <Plus size={16} />
@@ -458,15 +604,15 @@ const StoryWeaver = ({ sessionId }) => {
               </div>
 
               {/* AI Continuation Choices */}
-              {storySegments.length > 0 && storySegments[storySegments.length - 1].choices && (
+              {currentChoices.length > 0 && (
                 <div className="ai-choices-section">
-                  <h4>AI Suggestions</h4>
+                  <h4>Choose the Path Forward</h4>
                   <div className="choices-list">
-                    {storySegments[storySegments.length - 1].choices.map((choice, index) => (
+                    {currentChoices.map((choice, index) => (
                       <button
                         key={index}
                         className="choice-button"
-                        onClick={() => handleContinueStory(choice)}
+                        onClick={() => handleChoiceSelect(choice)}
                         disabled={isGenerating}
                       >
                         <ChevronRight size={16} />
@@ -476,28 +622,13 @@ const StoryWeaver = ({ sessionId }) => {
                   </div>
                 </div>
               )}
-
-              {/* Story Actions */}
-              <div className="story-actions">
-                <button 
-                  className="action-button secondary"
-                  onClick={() => {
-                    setStoryMode('select');
-                    setCurrentStory(null);
-                    setStorySegments([]);
-                  }}
-                >
-                  <Edit3 size={16} />
-                  New Story
-                </button>
-              </div>
             </div>
           )}
         </div>
 
         {/* Resizer */}
         <div 
-          className="panel-resizer"
+          className={`panel-resizer ${isResizing ? 'resizing' : ''}`}
           onMouseDown={handleMouseDown}
           ref={resizeRef}
         >
@@ -507,26 +638,30 @@ const StoryWeaver = ({ sessionId }) => {
         {/* Right Panel - Story Display */}
         <div 
           className="story-display-panel" 
-          style={{ width: `${100 - leftPanelWidth}%`, minWidth: '400px' }}
+          style={{ width: `${100 - leftPanelWidth}%` }}
         >
           {storyMode === 'select' ? (
             <div className="story-placeholder">
               <div className="placeholder-content">
                 <BookOpen size={48} className="placeholder-icon" />
-                <h3>Your Interactive Story Awaits</h3>
-                <p>Select a style and theme to begin building your personalized therapeutic narrative. You'll collaborate with AI to create a unique story that evolves with your input.</p>
+                <h3>Your Interactive Story Journey Awaits</h3>
+                <p>Select a style and theme to begin weaving your personalized therapeutic narrative. You'll work together with AI to create a unique story that evolves with your choices and input.</p>
                 <div className="feature-list">
                   <div className="feature-item">
                     <Sparkles size={16} />
-                    <span>AI generates story openings</span>
+                    <span>AI generates story openings based on your selections</span>
                   </div>
                   <div className="feature-item">
                     <Edit3 size={16} />
-                    <span>Add your own narrative</span>
+                    <span>Add your own narrative voice and direction</span>
                   </div>
                   <div className="feature-item">
                     <ChevronRight size={16} />
-                    <span>Choose story directions</span>
+                    <span>Choose between different story paths</span>
+                  </div>
+                  <div className="feature-item">
+                    <Heart size={16} />
+                    <span>Build therapeutic stories that reflect your journey</span>
                   </div>
                 </div>
               </div>
@@ -544,6 +679,9 @@ const StoryWeaver = ({ sessionId }) => {
                   <span className="theme-badge">
                     {storyThemes.find(t => t.id === selectedTheme)?.name}
                   </span>
+                  <span className="segment-count">
+                    {storySegments.length} segments
+                  </span>
                 </div>
               </div>
 
@@ -558,7 +696,13 @@ const StoryWeaver = ({ sessionId }) => {
                       transition={{ delay: index * 0.1 }}
                     >
                       <div className="segment-header">
-                        <span className="segment-author">{segment.author}</span>
+                        <div className="segment-author">
+                          {segment.author === 'You' ? (
+                            <><User size={14} /> </>
+                          ) : (
+                            <><Bot size={14} /> </>
+                          )}
+                        </div>
                         <span className="segment-time">
                           {new Date(segment.timestamp).toLocaleTimeString()}
                         </span>
@@ -571,10 +715,28 @@ const StoryWeaver = ({ sessionId }) => {
                 </AnimatePresence>
 
                 {isGenerating && (
-                  <div className="generating-indicator">
+                  <motion.div 
+                    className="generating-indicator"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                  >
                     <RefreshCw size={16} className="spin" />
-                    <span>AI is continuing the story...</span>
-                  </div>
+                    <span>AI is weaving the next part of your story...</span>
+                  </motion.div>
+                )}
+
+                {storySegments.length > 0 && !isGenerating && (
+                  <motion.div 
+                    className="story-continues"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ delay: 0.5 }}
+                  >
+                    <div className="continues-message">
+                      <Sparkles size={16} />
+                      <span>Your story continues to unfold... What happens next?</span>
+                    </div>
+                  </motion.div>
                 )}
               </div>
             </div>

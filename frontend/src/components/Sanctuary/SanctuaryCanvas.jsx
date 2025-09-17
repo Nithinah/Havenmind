@@ -16,6 +16,25 @@ const SanctuaryCanvas = ({
   const [hoveredElement, setHoveredElement] = useState(null);
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
 
+  // Emoji mappings for different element types
+  const elementEmojis = {
+    flower: '🌸',
+    tree: '🌳',
+    crystal: '💎',
+    butterfly: '🦋',
+    bird: '🐦',
+    stone: '🗿',
+    water: '💧',
+    plant: '🌱',
+    mist: '🌫️',
+    sun: '☀️',
+    moon: '🌙',
+    star: '⭐',
+    heart: '💖',
+    peace: '☮️',
+    default: '✨'
+  };
+
   // Initialize ambient particles - MOVED BEFORE useEffect
   const initializeParticles = useCallback(() => {
     particlesRef.current = [];
@@ -187,13 +206,60 @@ const SanctuaryCanvas = ({
       glowSize * 2
     );
 
-    // Draw main element
+    // Draw main circular element with pop-like appearance
+    ctx.beginPath();
+    ctx.arc(x_position, y_position, currentSize / 2, 0, Math.PI * 2);
+    
+    // Create pop-like gradient
+    const popGradient = ctx.createRadialGradient(
+      x_position - currentSize * 0.2, 
+      y_position - currentSize * 0.2, 
+      0,
+      x_position, 
+      y_position, 
+      currentSize / 2
+    );
+    popGradient.addColorStop(0, 'rgba(255, 255, 255, 0.8)');
+    popGradient.addColorStop(0.3, color + 'CC');
+    popGradient.addColorStop(1, color);
+    
+    ctx.fillStyle = popGradient;
+    ctx.fill();
+
+    // Draw element border with rounded appearance
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 3;
+    ctx.globalAlpha = 0.9;
+    ctx.stroke();
+
+    // Draw emoji in the center
+    const emoji = elementEmojis[element_type] || elementEmojis.default;
+    ctx.globalAlpha = 1;
+    ctx.font = `${Math.max(16, currentSize * 0.4)}px Arial`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    
+    // Add text shadow for better visibility
+    ctx.shadowColor = 'rgba(0, 0, 0, 0.3)';
+    ctx.shadowBlur = 4;
+    ctx.shadowOffsetX = 1;
+    ctx.shadowOffsetY = 1;
+    
+    ctx.fillStyle = '#ffffff';
+    ctx.fillText(emoji, x_position, y_position);
+    
+    // Reset shadow
+    ctx.shadowColor = 'transparent';
+    ctx.shadowBlur = 0;
+    ctx.shadowOffsetX = 0;
+    ctx.shadowOffsetY = 0;
+
+    // If there's an AI-generated image, draw it as overlay (optional)
     if (image_url && image_url.startsWith('data:image')) {
-      // Draw AI-generated image if available
       const img = new Image();
       img.onload = () => {
         ctx.save();
-        ctx.globalAlpha = 0.9;
+        ctx.globalAlpha = 0.3; // Make it subtle
         ctx.beginPath();
         ctx.arc(x_position, y_position, currentSize / 2, 0, Math.PI * 2);
         ctx.clip();
@@ -207,18 +273,7 @@ const SanctuaryCanvas = ({
         ctx.restore();
       };
       img.src = image_url;
-    } else {
-      // Draw procedural element
-      drawProceduralElement(ctx, element_type, x_position, y_position, currentSize, color);
     }
-
-    // Draw element border
-    ctx.strokeStyle = color;
-    ctx.lineWidth = 3;
-    ctx.globalAlpha = 0.8;
-    ctx.beginPath();
-    ctx.arc(x_position, y_position, currentSize / 2, 0, Math.PI * 2);
-    ctx.stroke();
 
     ctx.restore();
 
@@ -234,191 +289,29 @@ const SanctuaryCanvas = ({
     };
   };
 
-  const drawProceduralElement = (ctx, elementType, x, y, size, color) => {
-    const radius = size / 2;
-    
-    ctx.save();
-    ctx.fillStyle = color;
-    ctx.globalAlpha = 0.7;
-
-    switch (elementType) {
-      case 'flower':
-        drawFlower(ctx, x, y, radius, color);
-        break;
-      case 'tree':
-        drawTree(ctx, x, y, radius, color);
-        break;
-      case 'crystal':
-        drawCrystal(ctx, x, y, radius, color);
-        break;
-      case 'butterfly':
-        drawButterfly(ctx, x, y, radius, color);
-        break;
-      case 'bird':
-        drawBird(ctx, x, y, radius, color);
-        break;
-      case 'stone':
-        drawStone(ctx, x, y, radius, color);
-        break;
-      case 'water':
-        drawWater(ctx, x, y, radius, color);
-        break;
-      default:
-        // Default circle
-        ctx.beginPath();
-        ctx.arc(x, y, radius, 0, Math.PI * 2);
-        ctx.fill();
-    }
-
-    ctx.restore();
-  };
-
-  const drawFlower = (ctx, x, y, radius, color) => {
-    const petalCount = 6;
-    const petalRadius = radius * 0.6;
-    
-    // Draw petals
-    for (let i = 0; i < petalCount; i++) {
-      const angle = (i / petalCount) * Math.PI * 2;
-      const petalX = x + Math.cos(angle) * radius * 0.3;
-      const petalY = y + Math.sin(angle) * radius * 0.3;
-      
-      ctx.beginPath();
-      ctx.ellipse(petalX, petalY, petalRadius, petalRadius * 0.6, angle, 0, Math.PI * 2);
-      ctx.fill();
-    }
-    
-    // Draw center
-    ctx.fillStyle = '#FFD700';
-    ctx.beginPath();
-    ctx.arc(x, y, radius * 0.2, 0, Math.PI * 2);
-    ctx.fill();
-  };
-
-  const drawTree = (ctx, x, y, radius, color) => {
-    // Draw trunk
-    ctx.fillStyle = '#8B4513';
-    ctx.fillRect(x - radius * 0.1, y, radius * 0.2, radius);
-    
-    // Draw canopy
-    ctx.fillStyle = color;
-    ctx.beginPath();
-    ctx.arc(x, y - radius * 0.2, radius * 0.8, 0, Math.PI * 2);
-    ctx.fill();
-  };
-
-  const drawCrystal = (ctx, x, y, radius, color) => {
-    const sides = 6;
-    ctx.beginPath();
-    for (let i = 0; i <= sides; i++) {
-      const angle = (i / sides) * Math.PI * 2;
-      const pointX = x + Math.cos(angle) * radius;
-      const pointY = y + Math.sin(angle) * radius;
-      
-      if (i === 0) {
-        ctx.moveTo(pointX, pointY);
-      } else {
-        ctx.lineTo(pointX, pointY);
-      }
-    }
-    ctx.fill();
-  };
-
-  const drawButterfly = (ctx, x, y, radius, color) => {
-    // Upper wings
-    ctx.beginPath();
-    ctx.ellipse(x - radius * 0.3, y - radius * 0.2, radius * 0.5, radius * 0.3, -0.5, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.beginPath();
-    ctx.ellipse(x + radius * 0.3, y - radius * 0.2, radius * 0.5, radius * 0.3, 0.5, 0, Math.PI * 2);
-    ctx.fill();
-    
-    // Lower wings
-    ctx.beginPath();
-    ctx.ellipse(x - radius * 0.2, y + radius * 0.2, radius * 0.3, radius * 0.2, -0.3, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.beginPath();
-    ctx.ellipse(x + radius * 0.2, y + radius * 0.2, radius * 0.3, radius * 0.2, 0.3, 0, Math.PI * 2);
-    ctx.fill();
-    
-    // Body
-    ctx.strokeStyle = '#2D4B1F';
-    ctx.lineWidth = radius * 0.1;
-    ctx.beginPath();
-    ctx.moveTo(x, y - radius * 0.5);
-    ctx.lineTo(x, y + radius * 0.5);
-    ctx.stroke();
-  };
-
-  const drawBird = (ctx, x, y, radius, color) => {
-    // Body
-    ctx.beginPath();
-    ctx.ellipse(x, y, radius * 0.6, radius * 0.4, 0, 0, Math.PI * 2);
-    ctx.fill();
-    
-    // Wing
-    ctx.beginPath();
-    ctx.ellipse(x - radius * 0.2, y - radius * 0.1, radius * 0.4, radius * 0.2, -0.3, 0, Math.PI * 2);
-    ctx.fill();
-    
-    // Head
-    ctx.beginPath();
-    ctx.arc(x + radius * 0.3, y - radius * 0.1, radius * 0.2, 0, Math.PI * 2);
-    ctx.fill();
-  };
-
-  const drawStone = (ctx, x, y, radius, color) => {
-    const sides = 8;
-    const irregularity = 0.3;
-    
-    ctx.beginPath();
-    for (let i = 0; i <= sides; i++) {
-      const angle = (i / sides) * Math.PI * 2;
-      const randomRadius = radius * (1 + (Math.random() - 0.5) * irregularity);
-      const pointX = x + Math.cos(angle) * randomRadius;
-      const pointY = y + Math.sin(angle) * randomRadius;
-      
-      if (i === 0) {
-        ctx.moveTo(pointX, pointY);
-      } else {
-        ctx.lineTo(pointX, pointY);
-      }
-    }
-    ctx.fill();
-  };
-
-  const drawWater = (ctx, x, y, radius, color) => {
-    const waves = 3;
-    ctx.globalAlpha = 0.6;
-    
-    for (let i = 0; i < waves; i++) {
-      const waveRadius = radius * (0.3 + i * 0.2);
-      const time = Date.now() * 0.002;
-      const offsetY = Math.sin(time + i) * 2;
-      
-      ctx.strokeStyle = color;
-      ctx.lineWidth = 2;
-      ctx.beginPath();
-      ctx.arc(x, y + offsetY, waveRadius, 0, Math.PI * 2);
-      ctx.stroke();
-    }
-  };
-
   const drawHoverEffect = (ctx, element) => {
     if (!element._bounds) return;
 
     const { centerX, centerY, radius } = element._bounds;
     const time = Date.now() * 0.005;
     
-    // Animated hover ring
+    // Animated hover ring with pulsing effect
     ctx.save();
     ctx.strokeStyle = element.color;
-    ctx.lineWidth = 3;
+    ctx.lineWidth = 4;
     ctx.globalAlpha = 0.8;
     
-    const hoverRadius = radius + 20 + Math.sin(time) * 5;
+    const hoverRadius = radius + 20 + Math.sin(time) * 8;
     ctx.beginPath();
     ctx.arc(centerX, centerY, hoverRadius, 0, Math.PI * 2);
+    ctx.stroke();
+    
+    // Additional inner ring
+    ctx.lineWidth = 2;
+    ctx.globalAlpha = 0.4;
+    const innerRadius = radius + 10 + Math.sin(time + 1) * 4;
+    ctx.beginPath();
+    ctx.arc(centerX, centerY, innerRadius, 0, Math.PI * 2);
     ctx.stroke();
     
     ctx.restore();
@@ -499,7 +392,7 @@ const SanctuaryCanvas = ({
         <div className="canvas-empty">
           <div className="empty-message">
             <h3>Your sanctuary canvas awaits</h3>
-            <p>Share your thoughts and watch your sanctuary bloom with meaningful elements</p>
+            <p>Share your thoughts and watch your sanctuary bloom with meaningful elements featuring beautiful emojis</p>
           </div>
         </div>
       )}
@@ -516,7 +409,7 @@ const SanctuaryCanvas = ({
           exit={{ opacity: 0, scale: 0.8 }}
         >
           <div className="tooltip-content">
-            <strong>{hoveredElement.element_type}</strong>
+            <strong>{hoveredElement.element_type} {elementEmojis[hoveredElement.element_type] || elementEmojis.default}</strong>
             <span className="tooltip-emotion" style={{ color: hoveredElement.color }}>
               {hoveredElement.emotion}
             </span>

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, Suspense, useCallback } from 'react';
+import React, { useState, useEffect, Suspense, useCallback, useRef } from 'react';
 import './App.css';
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -34,6 +34,12 @@ function AppContent() {
   const [activeView, setActiveView] = useState('sanctuary');
   const [is3DMode, setIs3DMode] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [sidebarWidth, setSidebarWidth] = useState(380);
+  const [isDragging, setIsDragging] = useState(false);
+  
+  const appLayoutRef = useRef(null);
+  const startXRef = useRef(0);
+  const startWidthRef = useRef(380);
 
   // Update active view based on current route
   useEffect(() => {
@@ -55,6 +61,31 @@ function AppContent() {
       toast.success('Welcome to HavenMind! Your sanctuary awaits.');
     }
   }, [sessionId, setSessionId]);
+
+  // Handle sidebar dragging
+  const handleMouseDown = useCallback((e) => {
+    if (sidebarCollapsed) return;
+    
+    e.preventDefault();
+    setIsDragging(true);
+    startXRef.current = e.clientX;
+    startWidthRef.current = sidebarWidth;
+
+    const handleMouseMove = (e) => {
+      const deltaX = e.clientX - startXRef.current;
+      const newWidth = Math.min(Math.max(startWidthRef.current + deltaX, 280), 600);
+      setSidebarWidth(newWidth);
+    };
+
+    const handleMouseUp = () => {
+      setIsDragging(false);
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+    };
+
+    document.addEventListener('mousemove', handleMouseMove);
+    document.addEventListener('mouseup', handleMouseUp);
+  }, [sidebarCollapsed, sidebarWidth]);
 
   // Handle keyboard shortcuts with proper dependencies
   const handleKeyDown = useCallback((e) => {
@@ -112,9 +143,18 @@ function AppContent() {
       <StoryProvider sessionId={sessionId}>
         <SkillsProvider sessionId={sessionId}>
           <div className="app">
-            <div className={`app-layout ${sidebarCollapsed ? 'sidebar-collapsed' : ''}`}>
+            <div 
+              ref={appLayoutRef}
+              className={`app-layout ${sidebarCollapsed ? 'sidebar-collapsed' : ''} ${isDragging ? 'sidebar-dragging' : ''}`}
+            >
               {/* Sidebar */}
-              <aside className="app-sidebar">
+              <aside 
+                className="app-sidebar"
+                style={{ 
+                  width: sidebarCollapsed ? '80px' : `${sidebarWidth}px`,
+                  transition: isDragging ? 'none' : 'all 0.3s ease'
+                }}
+              >
                 <Sidebar
                   sessionId={sessionId}
                   activeView={activeView}
@@ -124,10 +164,50 @@ function AppContent() {
                   is3DMode={is3DMode}
                   onToggle3D={() => setIs3DMode(!is3DMode)}
                 />
+                
+                {/* Drag Handle */}
+                {!sidebarCollapsed && (
+                  <div
+                    className="sidebar-drag-handle"
+                    onMouseDown={handleMouseDown}
+                    style={{
+                      position: 'absolute',
+                      right: 0,
+                      top: 0,
+                      bottom: 0,
+                      width: '4px',
+                      cursor: 'ew-resize',
+                      backgroundColor: isDragging ? 'rgba(99, 102, 241, 0.5)' : 'transparent',
+                      transition: 'background-color 0.2s ease',
+                      zIndex: 1000
+                    }}
+                  >
+                    <div
+                      style={{
+                        position: 'absolute',
+                        right: '-2px',
+                        top: '50%',
+                        transform: 'translateY(-50%)',
+                        width: '8px',
+                        height: '40px',
+                        backgroundColor: isDragging ? 'rgba(99, 102, 241, 0.8)' : 'rgba(255, 255, 255, 0.1)',
+                        borderRadius: '4px',
+                        opacity: isDragging ? '1' : '0',
+                        transition: 'all 0.2s ease'
+                      }}
+                    />
+                  </div>
+                )}
               </aside>
 
               {/* Main Content */}
-              <main className="app-main">
+              <main 
+                className="app-main"
+                style={{
+                  marginLeft: sidebarCollapsed ? '80px' : `${sidebarWidth}px`,
+                  transition: isDragging ? 'none' : 'margin-left 0.3s ease'
+                }}
+              >
                 <AnimatePresence mode="wait">
                   <Routes>
                     <Route path="/" element={<Navigate to="/sanctuary" replace />} />
