@@ -1,9 +1,10 @@
-/* Sidebar.css */
+/* Fixed Sidebar.css with better spacing */
 
 .sidebar {
   display: flex;
   flex-direction: column;
   height: 100vh;
+  width: 380px;
   background: rgba(255, 255, 255, 0.95);
   backdrop-filter: blur(20px);
   border-right: 1px solid rgba(255, 255, 255, 0.2);
@@ -16,7 +17,7 @@
   width: 80px;
 }
 
-/* Header */
+/* Header - Fixed */
 .sidebar-header {
   display: flex;
   align-items: center;
@@ -24,6 +25,7 @@
   padding: 20px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
   min-height: 80px;
+  flex-shrink: 0;
 }
 
 .sidebar-logo {
@@ -77,10 +79,11 @@
   transform: translateY(-1px);
 }
 
-/* Navigation */
+/* Navigation - Fixed */
 .sidebar-nav {
-  padding: 0 20px;
+  padding: 20px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  flex-shrink: 0;
 }
 
 .nav-section-title {
@@ -89,7 +92,7 @@
   color: #6b7280;
   text-transform: uppercase;
   letter-spacing: 0.5px;
-  margin: 20px 0 12px 0;
+  margin: 0 0 12px 0;
 }
 
 .nav-items {
@@ -172,7 +175,7 @@
 
 /* View Mode Section */
 .view-mode-section {
-  margin-bottom: 20px;
+  margin-top: 20px;
 }
 
 .section-title {
@@ -221,27 +224,36 @@
   border-radius: 50%;
 }
 
-/* Content Sections */
+/* Content Sections - Fixed Layout */
 .sidebar-content {
   flex: 1;
-  overflow-y: auto;
-  padding: 0 20px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
 }
 
 .content-sections {
+  flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 24px;
-  padding: 24px 0;
+  height: 100%;
 }
 
 .content-section {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  overflow: hidden;
 }
 
-.content-section h3 {
+/* Fixed header for sections */
+.section-header-fixed {
+  padding: 16px 20px 12px 20px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+  background: rgba(255, 255, 255, 0.5);
+  flex-shrink: 0;
+}
+
+.section-header-fixed h3 {
   font-size: 16px;
   font-weight: 600;
   color: #1f2937;
@@ -249,7 +261,40 @@
   font-family: 'Playfair Display', serif;
 }
 
-/* Footer */
+/* Thoughts section - Always at top */
+.thoughts-section {
+  flex-shrink: 0;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.thoughts-section .emotion-input {
+  padding: 16px 20px 20px 20px;
+}
+
+/* Companion section */
+.companion-section {
+  flex-shrink: 0;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.companion-section .companion-message {
+  margin: 16px 20px 20px 20px;
+}
+
+/* Stats section - Scrollable */
+.stats-section {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.stats-section .sanctuary-stats {
+  padding: 16px 20px 20px 20px;
+  height: 100%;
+  overflow-y: auto;
+}
+
+/* Footer - Fixed */
 .sidebar-footer {
   display: flex;
   align-items: center;
@@ -257,6 +302,7 @@
   padding: 20px;
   border-top: 1px solid rgba(255, 255, 255, 0.1);
   background: rgba(255, 255, 255, 0.5);
+  flex-shrink: 0;
 }
 
 .footer-content {
@@ -440,9 +486,24 @@
     padding: 16px 20px;
   }
 
-  .sidebar-nav,
-  .sidebar-content {
-    padding: 0 16px;
+  .sidebar-nav {
+    padding: 16px 20px;
+  }
+
+  .section-header-fixed {
+    padding: 12px 16px 8px 16px;
+  }
+
+  .thoughts-section .emotion-input {
+    padding: 12px 16px 16px 16px;
+  }
+
+  .companion-section .companion-message {
+    margin: 12px 16px 16px 16px;
+  }
+
+  .stats-section .sanctuary-stats {
+    padding: 12px 16px 16px 16px;
   }
 
   .sidebar-footer {
@@ -464,9 +525,24 @@
     padding: 10px;
   }
 
-  .content-sections {
-    padding: 20px 0;
-    gap: 20px;
+  .section-header-fixed {
+    padding: 10px 12px 6px 12px;
+  }
+
+  .section-header-fixed h3 {
+    font-size: 14px;
+  }
+
+  .thoughts-section .emotion-input {
+    padding: 10px 12px 12px 12px;
+  }
+
+  .companion-section .companion-message {
+    margin: 10px 12px 12px 12px;
+  }
+
+  .stats-section .sanctuary-stats {
+    padding: 10px 12px 12px 12px;
   }
 
   .settings-modal {
@@ -511,20 +587,48 @@
   }
 }
 
-/* Scrollbar styling */
-.sidebar-content::-webkit-scrollbar {
+/* Scrollbar styling for stats section */
+.stats-section .sanctuary-stats::-webkit-scrollbar {
   width: 4px;
 }
 
-.sidebar-content::-webkit-scrollbar-track {
+.stats-section .sanctuary-stats::-webkit-scrollbar-track {
   background: rgba(0, 0, 0, 0.05);
 }
 
-.sidebar-content::-webkit-scrollbar-thumb {
+.stats-section .sanctuary-stats::-webkit-scrollbar-thumb {
   background: rgba(99, 102, 241, 0.3);
   border-radius: 2px;
 }
 
-.sidebar-content::-webkit-scrollbar-thumb:hover {
+.stats-section .sanctuary-stats::-webkit-scrollbar-thumb:hover {
   background: rgba(99, 102, 241, 0.5);
+}
+
+/* Dark mode adjustments */
+@media (prefers-color-scheme: dark) {
+  .sidebar {
+    background: rgba(31, 41, 55, 0.95);
+  }
+
+  .section-header-fixed {
+    background: rgba(31, 41, 55, 0.8);
+    border-bottom-color: rgba(255, 255, 255, 0.1);
+  }
+
+  .section-header-fixed h3 {
+    color: #f9fafb;
+  }
+
+  .sidebar-footer {
+    background: rgba(31, 41, 55, 0.8);
+  }
+
+  .user-name {
+    color: #f9fafb;
+  }
+
+  .user-status {
+    color: #9ca3af;
+  }
 }

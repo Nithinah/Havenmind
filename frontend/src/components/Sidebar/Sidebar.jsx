@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
-  Home, BookOpen, Target, Box , Menu, X, 
+  Home, BookOpen, Target, Box, Menu, X, 
   Settings, User, Moon, Sun 
 } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
@@ -47,7 +47,7 @@ const Sidebar = ({
       label: 'Stories',
       icon: BookOpen,
       path: '/story',
-      description: 'AI-generated therapeutic narratives'
+      description: 'Interactive therapeutic narratives'
     },
     {
       id: 'skills',
@@ -189,7 +189,7 @@ const Sidebar = ({
         )}
       </nav>
 
-      {/* Main Content Area */}
+      {/* Main Content Area - Fixed spacing */}
       <div className="sidebar-content">
         <AnimatePresence>
           {!collapsed && (
@@ -199,16 +199,20 @@ const Sidebar = ({
               exit={{ opacity: 0 }}
               className="content-sections"
             >
-              {/* Emotion Input */}
-              <div className="content-section">
-                <h3>Share Your Thoughts</h3>
+              {/* Share Your Thoughts - Fixed at top */}
+              <div className="content-section thoughts-section">
+                <div className="section-header-fixed">
+                  <h3>Share Your Thoughts</h3>
+                </div>
                 <EmotionInput sessionId={sessionId} />
               </div>
 
               {/* Companion Message */}
               {companionMessage && (
-                <div className="content-section">
-                  <h3>Luna's Message</h3>
+                <div className="content-section companion-section">
+                  <div className="section-header-fixed">
+                    <h3>Luna's Message</h3>
+                  </div>
                   <CompanionMessage 
                     message={companionMessage}
                     isLoading={sanctuaryLoading}
@@ -217,8 +221,10 @@ const Sidebar = ({
               )}
 
               {/* Sanctuary Stats */}
-              <div className="content-section">
-                <h3>Sanctuary Overview</h3>
+              <div className="content-section stats-section">
+                <div className="section-header-fixed">
+                  <h3>Sanctuary Overview</h3>
+                </div>
                 <SanctuaryStats 
                   stats={stats}
                   isLoading={sanctuaryLoading}
