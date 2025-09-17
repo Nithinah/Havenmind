@@ -32,6 +32,9 @@ const SanctuaryCanvas = ({
     star: '⭐',
     heart: '💖',
     peace: '☮️',
+    cloud: '☁️', 
+    wind: '🌬️', 
+    moss: '🌿', 
     default: '✨'
   };
 

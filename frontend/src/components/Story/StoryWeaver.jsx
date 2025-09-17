@@ -12,6 +12,8 @@ import toast from 'react-hot-toast';
 import './StoryWeaver.css';
 
 const StoryWeaver = ({ sessionId }) => {
+  // Background image state
+  const [backgroundImage, setBackgroundImage] = useState('');
   const [selectedStyle, setSelectedStyle] = useState('');
   const [selectedTheme, setSelectedTheme] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
@@ -129,7 +131,7 @@ const StoryWeaver = ({ sessionId }) => {
     document.addEventListener('mouseup', handleMouseUp);
   }, [leftPanelWidth]);
 
-  // Generate story opening with choices
+  // Generate story opening with choices and background image
   const handleGenerateOpening = async () => {
     if (!selectedStyle || !selectedTheme) {
       toast.error('Please select both a style and theme');
@@ -154,6 +156,12 @@ const StoryWeaver = ({ sessionId }) => {
       setStorySegments([opening]);
       setCurrentChoices(opening.choices || []);
       setStoryMode('building');
+
+      // Generate initial background image
+      const context = extractStoryContext(opening.content, opening.choices);
+      const imageUrl = await generateBackgroundImage(opening.title, context);
+      setBackgroundImage(imageUrl);
+
       toast.success('Story opening created! Choose your path or add your own twist.');
     } catch (error) {
       console.error('Error generating story:', error);
@@ -217,7 +225,7 @@ const StoryWeaver = ({ sessionId }) => {
     };
   };
 
-  // Continue story with AI choice
+  // Continue story with AI choice and update background image
   const handleChoiceSelect = async (choice) => {
     setIsGenerating(true);
     try {
@@ -236,6 +244,12 @@ const StoryWeaver = ({ sessionId }) => {
       setCurrentChoices(nextChoices);
       
       setStorySegments(prev => [...prev, continuation]);
+
+      // Update background image based on new story context
+      const context = extractStoryContext(continuation.content, nextChoices);
+      const imageUrl = await generateBackgroundImage(currentStory?.title, context);
+      setBackgroundImage(imageUrl);
+
       toast.success('Story continued! What happens next?');
     } catch (error) {
       toast.error('Error continuing story');
@@ -244,7 +258,7 @@ const StoryWeaver = ({ sessionId }) => {
     }
   };
 
-  // Add user input to story
+  // Add user input to story and update background image
   const handleAddUserInput = async () => {
     if (!userInput.trim()) {
       toast.error('Please write something to add to the story');
@@ -276,14 +290,36 @@ const StoryWeaver = ({ sessionId }) => {
       };
 
       setStorySegments(prev => [...prev, aiResponse]);
-      setCurrentChoices(generateNextChoices());
-      
+      const nextChoices = generateNextChoices();
+      setCurrentChoices(nextChoices);
+
+      // Update background image based on new story context
+      const context = extractStoryContext(userSegment.content + ' ' + aiResponse.content, nextChoices);
+      const imageUrl = await generateBackgroundImage(currentStory?.title, context);
+      setBackgroundImage(imageUrl);
+
       toast.success('Your contribution added to the story!');
     } catch (error) {
       toast.error('Error adding your input');
     } finally {
       setIsGenerating(false);
     }
+  };
+  // Extract character names and context from story for image generation
+  const extractStoryContext = (content, choices) => {
+    // Simple extraction: get main nouns and any names
+    const nameMatch = content.match(/([A-Z][a-z]+|[A-Z][a-z]+ [A-Z][a-z]+)/g);
+    const names = nameMatch ? nameMatch.join(', ') : '';
+    const context = `${content} ${choices ? choices.join(' ') : ''} ${names}`;
+    return context;
+  };
+
+  // Simulate AI image generation (replace with real API call)
+  const generateBackgroundImage = async (title, context) => {
+    // For demo, use Unsplash with context as search
+    const keywords = encodeURIComponent((title + ' ' + context).replace(/[^a-zA-Z0-9 ]/g, ' '));
+    // Use a random Unsplash image for now
+    return `https://source.unsplash.com/1600x900/?${keywords}`;
   };
 
   // Generate AI response to user input
@@ -425,7 +461,12 @@ const StoryWeaver = ({ sessionId }) => {
   };
 
   return (
-    <div className="story-weaver" ref={containerRef}>
+    <div className="story-weaver" ref={containerRef} style={{
+      backgroundImage: backgroundImage ? `linear-gradient(rgba(0,0,0,0.45),rgba(0,0,0,0.45)), url('${backgroundImage}')` : undefined,
+      backgroundSize: 'cover',
+      backgroundPosition: 'center',
+      transition: 'background-image 0.5s',
+    }}>
       <div className="story-weaver-header">
         <div className="header-content">
           <h2>Interactive Story Weaver</h2>
