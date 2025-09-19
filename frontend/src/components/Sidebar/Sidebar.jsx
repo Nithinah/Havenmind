@@ -1,8 +1,16 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { 
-  Home, BookOpen, Target, Box , Menu, X, 
-  Settings, User, Moon, Sun 
+import {
+  Home,
+  BookOpen,
+  Target,
+  Box,
+  Menu,
+  X,
+  Settings,
+  User,
+  Moon,
+  Sun
 } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 
@@ -12,25 +20,27 @@ import SanctuaryStats from './SanctuaryStats';
 import { useSanctuary } from '../../hooks/useSanctuary';
 import './Sidebar.css';
 
-const Sidebar = ({ 
-  sessionId, 
-  activeView, 
-  onViewChange, 
-  collapsed, 
+const Sidebar = ({
+  sessionId,
+  activeView,
+  onViewChange,
+  collapsed,
   onToggleCollapse,
   is3DMode,
-  onToggle3D 
+  onToggle3D,
+  darkMode,
+  onToggleDarkMode
 }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const [showSettings, setShowSettings] = useState(false);
-  const [darkMode, setDarkMode] = useState(false);
+  // darkMode and onToggleDarkMode are now props from App
   const [notifications, setNotifications] = useState(true);
-  
-  const { 
-    stats, 
-    companionMessage, 
-    isLoading: sanctuaryLoading 
+
+  const {
+    stats,
+    companionMessage,
+    isLoading: sanctuaryLoading
   } = useSanctuary(sessionId);
 
   // Navigation items
@@ -62,7 +72,7 @@ const Sidebar = ({
   const handleNavigate = (item) => {
     navigate(item.path);
     onViewChange?.(item.id);
-    
+
     // Close sidebar on mobile after navigation
     if (window.innerWidth < 768) {
       onToggleCollapse?.();
@@ -70,20 +80,18 @@ const Sidebar = ({
   };
 
   // Get current path for active state
-  const getCurrentPath = () => {
-    return location.pathname;
-  };
+  const getCurrentPath = () => location.pathname;
 
   return (
-    <motion.div 
+    <motion.div
       className={`sidebar ${collapsed ? 'collapsed' : ''}`}
       initial={{ x: -380 }}
       animate={{ x: 0 }}
-      transition={{ type: "spring", damping: 20 }}
+      transition={{ type: 'spring', damping: 20 }}
     >
       {/* Header */}
       <div className="sidebar-header">
-        <motion.div 
+        <motion.div
           className="sidebar-logo"
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
@@ -104,7 +112,7 @@ const Sidebar = ({
           </AnimatePresence>
         </motion.div>
 
-        <button 
+        <button
           className="sidebar-toggle"
           onClick={onToggleCollapse}
           aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
@@ -113,120 +121,126 @@ const Sidebar = ({
         </button>
       </div>
 
-      {/* Navigation */}
-      <nav className="sidebar-nav">
-        <AnimatePresence>
-          {!collapsed && (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="nav-section-title"
-            >
-              Navigate
-            </motion.div>
-          )}
-        </AnimatePresence>
-
-        <div className="nav-items">
-          {navigationItems.map((item) => {
-            const Icon = item.icon;
-            const isActive = getCurrentPath() === item.path;
-            
-            return (
-              <motion.button
-                key={item.id}
-                className={`nav-item ${isActive ? 'active' : ''}`}
-                onClick={() => handleNavigate(item)}
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                title={collapsed ? item.label : ''}
-              >
-                <div className="nav-item-icon">
-                  <Icon size={20} />
-                </div>
-                <AnimatePresence>
-                  {!collapsed && (
-                    <motion.div
-                      initial={{ opacity: 0, x: -10 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      exit={{ opacity: 0, x: -10 }}
-                      className="nav-item-content"
-                    >
-                      <span className="nav-item-label">{item.label}</span>
-                      <span className="nav-item-description">{item.description}</span>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-                {isActive && <div className="nav-item-indicator" />}
-              </motion.button>
-            );
-          })}
-        </div>
-
-        {/* 3D Toggle (only show on sanctuary page) */}
-        {getCurrentPath() === '/sanctuary' && (
+      {/* Main Scrollable Content Area */}
+      <div className="sidebar-scrollable-content">
+        {/* Navigation */}
+        <nav className="sidebar-nav">
           <AnimatePresence>
             {!collapsed && (
               <motion.div
-                initial={{ opacity: 0, height: 0 }}
-                animate={{ opacity: 1, height: 'auto' }}
-                exit={{ opacity: 0, height: 0 }}
-                className="view-mode-section"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="nav-section-title"
               >
-                <div className="section-title">View Mode</div>
-                <button 
-                  className={`mode-toggle ${is3DMode ? 'active-3d' : 'active-2d'}`}
-                  onClick={onToggle3D}
-                >
-                  <Box size={16} />
-                  <span>{is3DMode ? '3D View' : '2D View'}</span>
-                  <div className="toggle-indicator" />
-                </button>
+                Navigate
               </motion.div>
             )}
           </AnimatePresence>
-        )}
-      </nav>
 
-      {/* Main Content Area */}
-      <div className="sidebar-content">
-        <AnimatePresence>
-          {!collapsed && (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="content-sections"
-            >
-              {/* Emotion Input */}
-              <div className="content-section">
-                <h3>Share Your Thoughts</h3>
-                <EmotionInput sessionId={sessionId} />
-              </div>
+          <div className="nav-items">
+            {navigationItems.map((item) => {
+              const Icon = item.icon;
+              const isActive = getCurrentPath() === item.path;
 
-              {/* Companion Message */}
-              {companionMessage && (
+              return (
+                <motion.button
+                  key={item.id}
+                  className={`nav-item ${isActive ? 'active' : ''}`}
+                  onClick={() => handleNavigate(item)}
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  title={collapsed ? item.label : ''}
+                >
+                  <div className="nav-item-icon">
+                    <Icon size={20} />
+                  </div>
+                  <AnimatePresence>
+                    {!collapsed && (
+                      <motion.div
+                        initial={{ opacity: 0, x: -10 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        exit={{ opacity: 0, x: -10 }}
+                        className="nav-item-content"
+                      >
+                        <span className="nav-item-label">{item.label}</span>
+                        <span className="nav-item-description">
+                          {item.description}
+                        </span>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                  {isActive && <div className="nav-item-indicator" />}
+                </motion.button>
+              );
+            })}
+          </div>
+
+          {/* 3D Toggle (only show on sanctuary page) */}
+          {getCurrentPath() === '/sanctuary' && (
+            <AnimatePresence>
+              {!collapsed && (
+                <motion.div
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: 'auto' }}
+                  exit={{ opacity: 0, height: 0 }}
+                  className="view-mode-section"
+                >
+                  <div className="section-title">View Mode</div>
+                  <button
+                    className={`mode-toggle ${
+                      is3DMode ? 'active-3d' : 'active-2d'
+                    }`}
+                    onClick={onToggle3D}
+                  >
+                    <Box size={16} />
+                    <span>{is3DMode ? '3D View' : '2D View'}</span>
+                    <div className="toggle-indicator" />
+                  </button>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          )}
+        </nav>
+
+        {/* Content Sections */}
+        <div className="content-sections">
+          <AnimatePresence>
+            {!collapsed && (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+              >
+                {/* Emotion Input */}
                 <div className="content-section">
-                  <h3>Luna's Message</h3>
-                  <CompanionMessage 
-                    message={companionMessage}
+                  <h3>Share Your Thoughts</h3>
+                  <EmotionInput sessionId={sessionId} />
+                </div>
+
+                {/* Companion Message */}
+                {companionMessage && (
+                  <div className="content-section">
+                    <h3>Luna&apos;s Message</h3>
+                    <CompanionMessage
+                      message={companionMessage}
+                      isLoading={sanctuaryLoading}
+                    />
+                  </div>
+                )}
+
+                {/* Sanctuary Stats */}
+                <div className="content-section">
+                  <h3>Sanctuary Overview</h3>
+                  <SanctuaryStats
+                    stats={stats}
                     isLoading={sanctuaryLoading}
                   />
                 </div>
-              )}
-
-              {/* Sanctuary Stats */}
-              <div className="content-section">
-                <h3>Sanctuary Overview</h3>
-                <SanctuaryStats 
-                  stats={stats}
-                  isLoading={sanctuaryLoading}
-                />
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
       </div>
 
       {/* Footer */}
@@ -245,7 +259,7 @@ const Sidebar = ({
                 </div>
                 <div className="user-details">
                   <span className="user-name">Welcome</span>
-                  <span className="user-status">Growing & Healing</span>
+                  <span className="user-status">Growing &amp; Healing</span>
                 </div>
               </div>
             </motion.div>
@@ -253,17 +267,17 @@ const Sidebar = ({
         </AnimatePresence>
 
         <div className="footer-actions">
-          <button 
+          <button
             className="footer-action"
             onClick={() => setShowSettings(!showSettings)}
             title="Settings"
           >
             <Settings size={18} />
           </button>
-          
-          <button 
+
+          <button
             className="footer-action"
-            onClick={() => setDarkMode(!darkMode)}
+            onClick={onToggleDarkMode}
             title={darkMode ? 'Light mode' : 'Dark mode'}
           >
             {darkMode ? <Sun size={18} /> : <Moon size={18} />}
@@ -274,7 +288,7 @@ const Sidebar = ({
       {/* Settings Modal */}
       <AnimatePresence>
         {showSettings && (
-          <motion.div 
+          <motion.div
             className="settings-overlay"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -290,18 +304,18 @@ const Sidebar = ({
             >
               <div className="settings-header">
                 <h3>Settings</h3>
-                <button 
+                <button
                   className="close-settings"
                   onClick={() => setShowSettings(false)}
                 >
                   <X size={20} />
                 </button>
               </div>
-              
+
               <div className="settings-content">
                 <div className="setting-item">
                   <label>
-                    <input 
+                    <input
                       type="checkbox"
                       checked={notifications}
                       onChange={(e) => setNotifications(e.target.checked)}
@@ -309,21 +323,23 @@ const Sidebar = ({
                     <span>Enable notifications</span>
                   </label>
                 </div>
-                
+
                 <div className="setting-item">
                   <label>
-                    <input 
+                    <input
                       type="checkbox"
                       checked={darkMode}
-                      onChange={(e) => setDarkMode(e.target.checked)}
+                      onChange={onToggleDarkMode}
                     />
                     <span>Dark mode</span>
                   </label>
                 </div>
-                
+
                 <div className="setting-item">
                   <span>Session ID:</span>
-                  <code className="session-id">{sessionId?.slice(0, 8)}...</code>
+                  <code className="session-id">
+                    {sessionId?.slice(0, 8)}...
+                  </code>
                 </div>
               </div>
             </motion.div>

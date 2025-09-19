@@ -1,3 +1,41 @@
+/* Custom dark mode class for manual toggle */
+.dark-mode {
+  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%) !important;
+}
+
+.dark-mode .app-sidebar {
+  background: rgba(30, 30, 30, 0.95) !important;
+  border-right: 1px solid rgba(255, 255, 255, 0.1) !important;
+}
+
+.dark-mode .app-main {
+  background: transparent !important;
+  color: #e5e7eb !important;
+}
+
+.dark-mode .mobile-nav {
+  background: rgba(30, 30, 30, 0.95) !important;
+  border-top: 1px solid rgba(255, 255, 255, 0.1) !important;
+}
+
+.dark-mode .keyboard-shortcuts details {
+  background: rgba(255, 255, 255, 0.1) !important;
+  color: #e5e7eb !important;
+}
+
+.dark-mode .sidebar-drag-handle:hover {
+  background: rgba(99, 102, 241, 0.4) !important;
+}
+
+.dark-mode .stat-value,
+.dark-mode .stat-label,
+.dark-mode .stat-subtitle,
+.dark-mode .emotion-name,
+.dark-mode .emotion-count,
+.dark-mode .emotion-percentage,
+.dark-mode .insight-text {
+  color: #e5e7eb !important;
+}
 /* App.css - Main application styles */
 
 .app {
@@ -77,14 +115,14 @@
   transition: opacity 0.2s ease;
 }
 
-/* Main Content Styles */
+/* Main Content Styles - FIXED LAYOUT */
 .app-main {
   flex: 1;
   display: flex;
   flex-direction: column;
   overflow: hidden;
   position: relative;
-  transition: margin-left 0.3s ease;
+  min-width: 0;
 }
 
 .view-container {
@@ -272,7 +310,6 @@
   
   .app-main {
     padding-bottom: 80px; /* Space for mobile nav */
-    margin-left: 0 !important;
   }
   
   .mobile-nav {
@@ -388,7 +425,6 @@
   
   .app-main {
     padding: 0 !important;
-    margin-left: 0 !important;
   }
   
   .view-container {
@@ -476,15 +512,6 @@
 .app-layout.sidebar-dragging .sidebar-drag-handle::after {
   opacity: 1 !important;
   background: rgba(99, 102, 241, 0.9) !important;
-}
-
-/* Smooth transitions for sidebar resizing */
-.app-sidebar:not(.dragging) {
-  transition: width 0.3s ease;
-}
-
-.app-main:not(.dragging) {
-  transition: margin-left 0.3s ease;
 }
 
 /* Enhanced hover states */

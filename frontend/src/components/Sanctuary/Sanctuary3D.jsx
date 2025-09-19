@@ -16,9 +16,15 @@ const MODEL_PATHS = {
   crystal: '/models/crystal.glb',
   cloud: '/models/cloud.glb',
   wind: '/models/wind.glb',
+  flower: '/models/flower.glb',
+  tree: '/models/tree.glb',
+  butterfly: '/models/butterfly.glb',
+  stone: '/models/stone.glb',
+  water: '/models/water.glb',
   moss: '/models/moss.glb',
   plant: '/models/plant.glb',
   mist: '/models/mist.glb',
+  empty: '/models/empty.glb',
   default: '/models/default.glb'
 };
 

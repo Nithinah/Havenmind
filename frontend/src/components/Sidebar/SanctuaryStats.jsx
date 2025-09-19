@@ -235,7 +235,7 @@ const SanctuaryStats = ({ stats, isLoading }) => {
           {elements_this_week > 2 && (
             <div className="insight-item positive">
               <span className="insight-text" style={{ color: '#059669', fontWeight: '500' }}>
-                ✨ Great consistency this week!
+                Great consistency this week!
               </span>
             </div>
           )}

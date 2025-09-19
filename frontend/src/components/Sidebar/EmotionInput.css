@@ -19,8 +19,8 @@
 
 .journal-textarea {
   width: 100%;
-  min-height: 80px;
-  max-height: 200px;
+  min-height: 120px;
+  max-height: none;
   padding: 16px;
   border: 2px solid rgba(99, 102, 241, 0.2);
   border-radius: 12px;
@@ -29,9 +29,9 @@
   font-size: 14px;
   line-height: 1.5;
   font-family: inherit;
-  resize: none;
+  resize: none; /* Disable manual resizing */
   transition: all 0.2s ease;
-  overflow-y: auto;
+  overflow-y: hidden; /* Never show textarea scrollbar */
 }
 
 .journal-textarea:focus {
@@ -311,24 +311,6 @@
   outline-offset: 2px;
 }
 
-/* Scrollbar styling for textarea */
-.journal-textarea::-webkit-scrollbar {
-  width: 4px;
-}
-
-.journal-textarea::-webkit-scrollbar-track {
-  background: rgba(0, 0, 0, 0.05);
-  border-radius: 2px;
-}
-
-.journal-textarea::-webkit-scrollbar-thumb {
-  background: rgba(99, 102, 241, 0.3);
-  border-radius: 2px;
-}
-
-.journal-textarea::-webkit-scrollbar-thumb:hover {
-  background: rgba(99, 102, 241, 0.5);
-}
 
 /* Print styles */
 @media print {
@@ -345,4 +327,24 @@
     border: 1px solid black !important;
     background: white !important;
   }
+}
+
+/* Sidebar scrollable container */
+.sidebar-scrollable {
+  overflow-y: auto;
+  max-height: 100vh;
+  scrollbar-width: thin;
+  scrollbar-color: #cfcfcf #f5f5f5;
+}
+
+/* For Webkit browsers */
+.sidebar-scrollable::-webkit-scrollbar {
+  width: 8px;
+}
+.sidebar-scrollable::-webkit-scrollbar-thumb {
+  background: #cfcfcf;
+  border-radius: 4px;
+}
+.sidebar-scrollable::-webkit-scrollbar-track {
+  background: #f5f5f5;
 }

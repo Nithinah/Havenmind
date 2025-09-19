@@ -36,6 +36,7 @@ function AppContent() {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [sidebarWidth, setSidebarWidth] = useState(380);
   const [isDragging, setIsDragging] = useState(false);
+  const [darkMode, setDarkMode] = useState(false);
   
   const appLayoutRef = useRef(null);
   const startXRef = useRef(0);
@@ -142,7 +143,7 @@ function AppContent() {
     <SanctuaryProvider sessionId={sessionId}>
       <StoryProvider sessionId={sessionId}>
         <SkillsProvider sessionId={sessionId}>
-          <div className="app">
+          <div className={`app${darkMode ? ' dark-mode' : ''}`}>
             <div 
               ref={appLayoutRef}
               className={`app-layout ${sidebarCollapsed ? 'sidebar-collapsed' : ''} ${isDragging ? 'sidebar-dragging' : ''}`}
@@ -163,8 +164,9 @@ function AppContent() {
                   onToggleCollapse={() => setSidebarCollapsed(!sidebarCollapsed)}
                   is3DMode={is3DMode}
                   onToggle3D={() => setIs3DMode(!is3DMode)}
+                  darkMode={darkMode}
+                  onToggleDarkMode={() => setDarkMode((prev) => !prev)}
                 />
-                
                 {/* Drag Handle */}
                 {!sidebarCollapsed && (
                   <div
@@ -179,7 +181,7 @@ function AppContent() {
                       cursor: 'ew-resize',
                       backgroundColor: isDragging ? 'rgba(99, 102, 241, 0.5)' : 'transparent',
                       transition: 'background-color 0.2s ease',
-                      zIndex: 1000
+                      zIndex: 1001
                     }}
                   >
                     <div
@@ -199,19 +201,13 @@ function AppContent() {
                   </div>
                 )}
               </aside>
-
               {/* Main Content */}
               <main 
                 className="app-main"
-                style={{
-                  marginLeft: sidebarCollapsed ? '80px' : `${sidebarWidth}px`,
-                  transition: isDragging ? 'none' : 'margin-left 0.3s ease'
-                }}
               >
                 <AnimatePresence mode="wait">
                   <Routes>
                     <Route path="/" element={<Navigate to="/sanctuary" replace />} />
-                    
                     <Route 
                       path="/sanctuary" 
                       element={
@@ -235,7 +231,6 @@ function AppContent() {
                         </motion.div>
                       } 
                     />
-                    
                     <Route 
                       path="/story" 
                       element={
@@ -253,7 +248,6 @@ function AppContent() {
                         </motion.div>
                       } 
                     />
-                    
                     <Route 
                       path="/skills" 
                       element={
@@ -275,7 +269,6 @@ function AppContent() {
                 </AnimatePresence>
               </main>
             </div>
-
             {/* Mobile Navigation */}
             {window.innerWidth < 768 && (
               <nav className="mobile-nav">
@@ -299,7 +292,6 @@ function AppContent() {
                 </button>
               </nav>
             )}
-
             {/* Keyboard Shortcuts Help */}
             <div className="keyboard-shortcuts no-print">
               <details>
