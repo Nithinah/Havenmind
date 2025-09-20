@@ -27,10 +27,13 @@ app = FastAPI(
 
 # Main CORS configuration
 # This middleware handles all preflight requests and CORS headers automatically.
+origins = settings.CORS_ORIGINS.split(',')
+origins.extend(["http://localhost:3001", "http://127.0.0.1:3001", "https://havenmind.vercel.app"])
+
 app.add_middleware(
     CORSMiddleware,
     # In production, use your actual Vercel URL here without a trailing slash.
-    allow_origins=settings.CORS_ORIGINS + ["http://localhost:3001", "http://127.0.0.1:3001", "https://havenmind.vercel.app"],
+    allow_origins=origins,
     allow_credentials=False,
     allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS", "HEAD", "PATCH"],
     allow_headers=[
@@ -51,7 +54,7 @@ app.add_middleware(
 # Add trusted host middleware for security
 app.add_middleware(
     TrustedHostMiddleware,
-    # In production, add both your Vercel URL and the Railway URL to the allowed_hosts list.
+    # In production, add your actual Railway URL to the allowed_hosts list.
     allowed_hosts=["localhost", "127.0.0.1", "0.0.0.0"] if settings.DEBUG else ["havenmind-production.up.railway.app"]
 )
 
