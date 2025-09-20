@@ -4,6 +4,7 @@ from fastapi.responses import JSONResponse
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
 import logging
 import uvicorn
+import os
 
 from app.config import settings
 from app.database import init_db
@@ -27,7 +28,7 @@ app = FastAPI(
 
 # Main CORS configuration
 # This middleware handles all preflight requests and CORS headers automatically.
-origins = settings.CORS_ORIGINS.split(',')
+origins = settings.CORS_ORIGINS.split(',') if settings.CORS_ORIGINS else []
 origins.extend(["http://localhost:3001", "http://127.0.0.1:3001", "https://havenmind.vercel.app"])
 
 app.add_middleware(
