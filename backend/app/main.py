@@ -25,11 +25,14 @@ app = FastAPI(
     redoc_url="/redoc" if settings.DEBUG else None
 )
 
-# Enhanced CORS configuration - This fixes the OPTIONS 400 Bad Request errors
+# Main CORS configuration
+# This middleware handles all preflight requests and CORS headers automatically.
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=settings.CORS_ORIGINS + ["http://localhost:3001", "http://127.0.0.1:3001"],  # Added frontend port
-    allow_credentials=False,  # Changed to False since we're not using credentials
+    # In production, use your actual Vercel URL here.
+    # We are using a placeholder for the deployed Vercel URL.
+    allow_origins=settings.CORS_ORIGINS + ["http://localhost:3001", "http://127.0.0.1:3001", "https://havenmind.vercel.app/"],
+    allow_credentials=False,
     allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS", "HEAD", "PATCH"],
     allow_headers=[
         "Accept",
@@ -43,13 +46,14 @@ app.add_middleware(
         "Access-Control-Request-Headers",
     ],
     expose_headers=["*"],
-    max_age=86400,  # Cache preflight requests for 24 hours
+    max_age=86400,
 )
 
 # Add trusted host middleware for security
 app.add_middleware(
     TrustedHostMiddleware,
-    allowed_hosts=["localhost", "127.0.0.1", "0.0.0.0"] if settings.DEBUG else ["yourdomain.com"]
+    # In production, use your actual Vercel URL here.
+    allowed_hosts=["localhost", "127.0.0.1", "0.0.0.0"] if settings.DEBUG else ["your-vercel-domain.vercel.app"]
 )
 
 # Include routers
@@ -104,47 +108,6 @@ async def global_exception_handler(request, exc):
         content={
             "detail": "Internal server error",
             "type": "internal_error"
-        },
-        headers={
-            "Access-Control-Allow-Origin": "*",
-            "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
-            "Access-Control-Allow-Headers": "*",
-        }
-    )
-
-@app.middleware("http")
-async def add_cors_headers(request, call_next):
-    """Add CORS headers to all responses."""
-    response = await call_next(request)
-    
-    # Add CORS headers to all responses
-    origin = request.headers.get("origin")
-    if origin and (origin in settings.CORS_ORIGINS or 
-                  origin in ["http://localhost:3001", "http://127.0.0.1:3001"] or
-                  settings.DEBUG):
-        response.headers["Access-Control-Allow-Origin"] = origin
-    elif settings.DEBUG:
-        response.headers["Access-Control-Allow-Origin"] = "*"
-    
-    response.headers["Access-Control-Allow-Credentials"] = "false"
-    response.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, OPTIONS, HEAD, PATCH"
-    response.headers["Access-Control-Allow-Headers"] = "*"
-    response.headers["Access-Control-Max-Age"] = "86400"
-    
-    return response
-
-# Explicit OPTIONS handler for all routes
-@app.options("/{path:path}")
-async def handle_options(path: str):
-    """Handle preflight OPTIONS requests for all paths."""
-    return JSONResponse(
-        status_code=200,
-        content={},
-        headers={
-            "Access-Control-Allow-Origin": "*" if settings.DEBUG else "null",
-            "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS, HEAD, PATCH",
-            "Access-Control-Allow-Headers": "*",
-            "Access-Control-Max-Age": "86400",
         }
     )
 
