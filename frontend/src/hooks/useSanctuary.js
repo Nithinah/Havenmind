@@ -7,6 +7,12 @@ export const useSanctuary = (sessionId) => {
   const [companionMessage, setCompanionMessage] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [lastSubmissionTime, setLastSubmissionTime] = useState(null);
+
+  // Polling mechanism for safety net
+  const [shouldPoll, setShouldPoll] = useState(false);
+  const [pollCount, setPollCount] = useState(0);
+  const maxPollAttempts = 10; // Poll for up to 30 seconds (3s intervals)
 
   // Load sanctuary elements
   const loadElements = useCallback(async () => {
@@ -57,17 +63,35 @@ export const useSanctuary = (sessionId) => {
       
       // IMMEDIATE UI UPDATES - No page refresh needed!
       
-      // 1. If response contains new elements, add them immediately
-      if (response.new_elements && Array.isArray(response.new_elements)) {
-        console.log('🎨 Adding new elements to UI:', response.new_elements);
-        setElements(prevElements => [...prevElements, ...response.new_elements]);
+      // 1. Handle new response format - new_elements is now the key
+      if (response.new_elements && Array.isArray(response.new_elements) && response.new_elements.length > 0) {
+        console.log('🎨 Adding new elements to UI immediately:', response.new_elements);
+        setElements(prevElements => {
+          const newElementIds = new Set(response.new_elements.map(el => el.id));
+          const filteredPrevElements = prevElements.filter(el => !newElementIds.has(el.id));
+          return [...filteredPrevElements, ...response.new_elements];
+        });
+        setLastSubmissionTime(Date.now());
+        setShouldPoll(false); // Stop polling since we got immediate results
       } else if (response.element) {
-        // Single element returned
+        // Single element returned (backup format)
         console.log('🎨 Adding single element to UI:', response.element);
-        setElements(prevElements => [...prevElements, response.element]);
+        setElements(prevElements => {
+          const exists = prevElements.some(el => el.id === response.element.id);
+          if (exists) return prevElements;
+          return [...prevElements, response.element];
+        });
+        setLastSubmissionTime(Date.now());
+        setShouldPoll(false);
+      } else {
+        // Fallback: Start polling for new elements
+        console.log('⚠️ No elements in immediate response, starting polling...');
+        setLastSubmissionTime(Date.now());
+        setShouldPoll(true);
+        setPollCount(0);
       }
       
-      // 2. Update companion message immediately
+      // 2. Update companion message immediately if provided
       if (response.companion_response) {
         console.log('💬 Setting companion message:', response.companion_response);
         setCompanionMessage(response.companion_response);
@@ -77,16 +101,10 @@ export const useSanctuary = (sessionId) => {
       if (response.updated_stats) {
         console.log('📊 Updating stats:', response.updated_stats);
         setStats(response.updated_stats);
-      }
-      
-      // 4. Refresh data in background (optional fallback)
-      // Only do this if we didn't get elements in response
-      if (!response.new_elements && !response.element) {
-        console.log('🔄 Fallback: Loading elements in background...');
+      } else {
+        // Refresh stats in background
         setTimeout(async () => {
-          const newElements = await loadElements();
-          const newStats = await loadStats();
-          console.log('🔄 Background refresh complete:', { newElements, newStats });
+          await loadStats();
         }, 500);
       }
       
@@ -190,6 +208,43 @@ export const useSanctuary = (sessionId) => {
         });
     }
   }, [sessionId, loadElements, loadStats]);
+
+  // Polling effect for safety net
+  useEffect(() => {
+    if (!shouldPoll || !lastSubmissionTime) return;
+
+    const pollInterval = setInterval(async () => {
+      if (pollCount >= maxPollAttempts) {
+        console.log('⏰ Polling timeout reached, stopping polls');
+        setShouldPoll(false);
+        setPollCount(0);
+        return;
+      }
+
+      console.log(`🔄 Polling for new elements (attempt ${pollCount + 1}/${maxPollAttempts})...`);
+      
+      try {
+        const currentElements = await loadElements();
+        const newElementsSinceSubmission = currentElements.filter(el => 
+          new Date(el.created_at).getTime() > lastSubmissionTime - 1000 // 1s buffer
+        );
+
+        if (newElementsSinceSubmission.length > 0) {
+          console.log('🎉 Found new elements via polling:', newElementsSinceSubmission);
+          setShouldPoll(false);
+          setPollCount(0);
+          return;
+        }
+
+        setPollCount(prev => prev + 1);
+      } catch (error) {
+        console.error('❌ Polling failed:', error);
+        setPollCount(prev => prev + 1);
+      }
+    }, 3000); // Poll every 3 seconds
+
+    return () => clearInterval(pollInterval);
+  }, [shouldPoll, lastSubmissionTime, pollCount, loadElements, maxPollAttempts]);
 
   // Refresh all data (manual refresh)
   const refreshElements = useCallback(async () => {

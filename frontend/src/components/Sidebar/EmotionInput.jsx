@@ -59,9 +59,9 @@ const EmotionInput = ({ sessionId }) => {
       console.log('📝 Submitting journal entry...');
       
       // Show immediate feedback
-      const loadingToast = toast.loading('Processing your thoughts...');
+      const loadingToast = toast.loading('Processing your thoughts and creating sanctuary elements...');
       
-      await createJournalEntry({
+      const response = await createJournalEntry({
         content: journalText.trim(),
         session_id: sessionId
       });
@@ -69,11 +69,19 @@ const EmotionInput = ({ sessionId }) => {
       // Dismiss loading toast
       toast.dismiss(loadingToast);
       
-      // Success feedback
-      toast.success('✨ Your sanctuary is growing! New elements have been added.', {
-        duration: 4000,
-        icon: '🌱'
-      });
+      // Success feedback with more details
+      const elementsAdded = response?.new_elements?.length || 0;
+      if (elementsAdded > 0) {
+        toast.success(`✨ ${elementsAdded} new element${elementsAdded > 1 ? 's' : ''} added to your sanctuary!`, {
+          duration: 4000,
+          icon: '🌱'
+        });
+      } else {
+        toast.success('✨ Your thoughts have been processed! Your sanctuary is growing.', {
+          duration: 4000,
+          icon: '🌱'
+        });
+      }
       
       // Clear form immediately
       setJournalText('');
@@ -84,7 +92,7 @@ const EmotionInput = ({ sessionId }) => {
         textareaRef.current?.focus();
       }, 100);
       
-      console.log('✅ Journal entry submitted successfully');
+      console.log('✅ Journal entry submitted successfully:', response);
       
     } catch (error) {
       console.error('❌ Error submitting journal entry:', error);

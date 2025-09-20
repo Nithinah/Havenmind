@@ -26,7 +26,7 @@ from app.utils.helpers import (
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/sanctuary", tags=["sanctuary"])
 
-@router.post("/journal-entry", response_model=JournalEntryResponse)
+@router.post("/journal-entry")
 async def create_journal_entry(
     entry_data: JournalEntryCreate,
     background_tasks: BackgroundTasks,
@@ -55,6 +55,12 @@ async def create_journal_entry(
         db.add(journal_entry)
         db.flush()  # Get the ID
         
+        # CREATE SANCTUARY ELEMENT IMMEDIATELY (not in background)
+        new_element = await create_sanctuary_element_immediate(
+            db, session_id, entry_data.content, 
+            primary_emotion, sentiment_score
+        )
+        
         # Generate companion response in background
         background_tasks.add_task(
             generate_companion_response_task,
@@ -62,12 +68,12 @@ async def create_journal_entry(
             primary_emotion, sentiment_score, themes
         )
         
-        # Create sanctuary element
-        background_tasks.add_task(
-            create_sanctuary_element_task,
-            db, session_id, entry_data.content, 
-            primary_emotion, sentiment_score
-        )
+        # Generate image for element in background (optional enhancement)
+        if new_element:
+            background_tasks.add_task(
+                generate_element_image_task,
+                db, new_element.id, new_element.element_type, primary_emotion, entry_data.content
+            )
         
         # Update skill unlocks
         background_tasks.add_task(
@@ -77,12 +83,92 @@ async def create_journal_entry(
         
         db.commit()
         
-        return JournalEntryResponse.from_orm(journal_entry)
+        # Return both journal entry and new element for immediate UI update
+        response_data = {
+            "journal_entry": JournalEntryResponse.from_orm(journal_entry).dict(),
+            "new_elements": [SanctuaryElementResponse.from_orm(new_element).dict()] if new_element else [],
+            "message": "Journal entry created and sanctuary element added successfully"
+        }
+        
+        return response_data
         
     except Exception as e:
         db.rollback()
         logger.error(f"Error creating journal entry: {e}")
         raise HTTPException(status_code=500, detail="Failed to create journal entry")
+
+async def create_sanctuary_element_immediate(
+    db: Session,
+    session_id: str,
+    journal_content: str,
+    emotion: str,
+    sentiment_score: float
+) -> Optional[SanctuaryElement]:
+    """Create sanctuary element immediately (not in background)."""
+    try:
+        # Get existing elements for positioning
+        existing_elements = db.query(SanctuaryElement).filter(
+            SanctuaryElement.session_id == session_id
+        ).all()
+        
+        existing_positions = [
+            {"x_position": elem.x_position, "y_position": elem.y_position}
+            for elem in existing_elements
+        ]
+        
+        # Calculate element properties
+        element_type = emotion_to_element_type(emotion, sentiment_score)
+        color = emotion_to_color(emotion)
+        x_pos, y_pos = calculate_element_position(existing_positions)
+        size = calculate_element_size(sentiment_score)
+        
+        # Create sanctuary element
+        element = SanctuaryElement(
+            session_id=session_id,
+            element_type=element_type,
+            x_position=x_pos,
+            y_position=y_pos,
+            z_position=0.0,
+            size=size,
+            color=color,
+            emotion=emotion,
+            sentiment_score=sentiment_score,
+            journal_entry=journal_content[:500]  # Truncate for storage
+        )
+        db.add(element)
+        db.flush()  # Get the ID but don't commit yet
+        
+        return element
+        
+    except Exception as e:
+        logger.error(f"Error creating sanctuary element immediately: {e}")
+        return None
+
+async def generate_element_image_task(
+    db: Session,
+    element_id: int,
+    element_type: str,
+    emotion: str,
+    journal_content: str
+):
+    """Background task to generate element image."""
+    try:
+        # Generate image
+        image_url = await image_generation_service.generate_sanctuary_image(
+            element_type, emotion, journal_content
+        )
+        
+        # Update element with image URL
+        element = db.query(SanctuaryElement).filter(
+            SanctuaryElement.id == element_id
+        ).first()
+        
+        if element:
+            element.image_url = image_url
+            db.commit()
+            
+    except Exception as e:
+        logger.error(f"Error generating element image: {e}")
 
 async def generate_companion_response_task(
     db: Session, 
@@ -121,54 +207,9 @@ async def create_sanctuary_element_task(
     emotion: str,
     sentiment_score: float
 ):
-    """Background task to create sanctuary element with image."""
-    try:
-        # Get existing elements for positioning
-        existing_elements = db.query(SanctuaryElement).filter(
-            SanctuaryElement.session_id == session_id
-        ).all()
-        
-        existing_positions = [
-            {"x_position": elem.x_position, "y_position": elem.y_position}
-            for elem in existing_elements
-        ]
-        
-        # Calculate element properties
-        element_type = emotion_to_element_type(emotion, sentiment_score)
-        color = emotion_to_color(emotion)
-        x_pos, y_pos = calculate_element_position(existing_positions)
-        size = calculate_element_size(sentiment_score)
-        
-        # Create sanctuary element
-        element = SanctuaryElement(
-            session_id=session_id,
-            element_type=element_type,
-            x_position=x_pos,
-            y_position=y_pos,
-            z_position=0.0,
-            size=size,
-            color=color,
-            emotion=emotion,
-            sentiment_score=sentiment_score,
-            journal_entry=journal_content[:500]  # Truncate for storage
-        )
-        db.add(element)
-        db.flush()
-        
-        # Generate image in background
-        try:
-            image_url = await image_generation_service.generate_sanctuary_image(
-                element_type, emotion, journal_content
-            )
-            element.image_url = image_url
-        except Exception as img_error:
-            logger.error(f"Error generating image: {img_error}")
-            # Continue without image
-        
-        db.commit()
-        
-    except Exception as e:
-        logger.error(f"Error creating sanctuary element: {e}")
+    """Background task to create sanctuary element with image (DEPRECATED - use immediate version)."""
+    # This function is now deprecated in favor of create_sanctuary_element_immediate
+    pass
 
 async def update_skill_unlocks_task(db: Session, session_id: str):
     """Background task to update skill unlocks."""
