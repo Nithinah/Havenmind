@@ -52,8 +52,8 @@ app.add_middleware(
 # Add trusted host middleware for security
 app.add_middleware(
     TrustedHostMiddleware,
-    # In production, use your actual Vercel URL here.
-    allowed_hosts=["localhost", "127.0.0.1", "0.0.0.0"] if settings.DEBUG else ["your-vercel-domain.vercel.app"]
+    # In production, add your actual Railway URL to the allowed_hosts list.
+    allowed_hosts=["localhost", "127.0.0.1", "0.0.0.0"] if settings.DEBUG else ["havenmind-production.up.railway.app"]
 )
 
 # Include routers
