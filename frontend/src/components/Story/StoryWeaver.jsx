@@ -9,6 +9,7 @@ import {
   User, Bot, X
 } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { apiService } from '../../services/api';
 import './StoryWeaver.css';
 
 const StoryWeaver = ({ sessionId }) => {
@@ -157,9 +158,9 @@ const StoryWeaver = ({ sessionId }) => {
       setCurrentChoices(opening.choices || []);
       setStoryMode('building');
 
-      // Generate initial background image
-      const context = extractStoryContext(opening.content, opening.choices);
-      const imageUrl = await generateBackgroundImage(opening.title, context);
+      // Generate background image using actual opening content
+      const imageUrl = await generateBackgroundImage(opening.title, opening.content);
+      console.log('🎨 Setting background image to:', imageUrl);
       setBackgroundImage(imageUrl);
 
       toast.success('Story opening created! Choose your path or add your own twist.');
@@ -245,9 +246,9 @@ const StoryWeaver = ({ sessionId }) => {
       
       setStorySegments(prev => [...prev, continuation]);
 
-      // Update background image based on new story context
-      const context = extractStoryContext(continuation.content, nextChoices);
-      const imageUrl = await generateBackgroundImage(currentStory?.title, context);
+      // Generate background image using the actual selected choice content
+      const imageUrl = await generateBackgroundImage(currentStory?.title, choice);
+      console.log('🎨 Setting background image to:', imageUrl);
       setBackgroundImage(imageUrl);
 
       toast.success('Story continued! What happens next?');
@@ -276,6 +277,12 @@ const StoryWeaver = ({ sessionId }) => {
       };
 
       setStorySegments(prev => [...prev, userSegment]);
+
+      // Generate background image using the actual user input content
+      const imageUrl = await generateBackgroundImage(currentStory?.title, userInput.trim());
+      console.log('🎨 Setting background image to:', imageUrl);
+      setBackgroundImage(imageUrl);
+
       setUserInput('');
 
       // Generate AI response to user input
@@ -284,7 +291,7 @@ const StoryWeaver = ({ sessionId }) => {
       const aiResponse = {
         id: Date.now() + 1,
         type: 'ai_response',
-        content: generateAIResponse(userInput),
+        content: generateAIResponse(userInput.trim()),
         author: 'AI',
         timestamp: new Date().toISOString()
       };
@@ -292,11 +299,6 @@ const StoryWeaver = ({ sessionId }) => {
       setStorySegments(prev => [...prev, aiResponse]);
       const nextChoices = generateNextChoices();
       setCurrentChoices(nextChoices);
-
-      // Update background image based on new story context
-      const context = extractStoryContext(userSegment.content + ' ' + aiResponse.content, nextChoices);
-      const imageUrl = await generateBackgroundImage(currentStory?.title, context);
-      setBackgroundImage(imageUrl);
 
       toast.success('Your contribution added to the story!');
     } catch (error) {
@@ -307,19 +309,126 @@ const StoryWeaver = ({ sessionId }) => {
   };
   // Extract character names and context from story for image generation
   const extractStoryContext = (content, choices) => {
-    // Simple extraction: get main nouns and any names
-    const nameMatch = content.match(/([A-Z][a-z]+|[A-Z][a-z]+ [A-Z][a-z]+)/g);
-    const names = nameMatch ? nameMatch.join(', ') : '';
-    const context = `${content} ${choices ? choices.join(' ') : ''} ${names}`;
-    return context;
+    // Extract character names (capitalized words that appear to be names)
+    const nameMatch = content.match(/\b[A-Z][a-z]+\b/g);
+    const potentialNames = nameMatch ? nameMatch.filter(word => 
+      !['The', 'And', 'But', 'For', 'Or', 'A', 'An', 'This', 'That', 'With', 'Through'].includes(word)
+    ) : [];
+    
+    // Extract settings/locations
+    const locationKeywords = [
+      'forest', 'castle', 'room', 'hall', 'chamber', 'garden', 'mountain', 'valley', 
+      'cave', 'clearing', 'path', 'river', 'bridge', 'tower', 'door', 'entrance',
+      'kingdom', 'village', 'city', 'palace', 'temple', 'sanctuary', 'meadow'
+    ];
+    const locations = locationKeywords.filter(loc => 
+      content.toLowerCase().includes(loc)
+    );
+    
+    // Extract key actions/verbs
+    const actionKeywords = [
+      'enter', 'walk', 'discover', 'find', 'see', 'approach', 'climb', 'open',
+      'journey', 'travel', 'explore', 'search', 'meet', 'encounter', 'face'
+    ];
+    const actions = actionKeywords.filter(action => 
+      content.toLowerCase().includes(action)
+    );
+    
+    // Extract mood/atmosphere words
+    const atmosphereKeywords = [
+      'dark', 'bright', 'mysterious', 'peaceful', 'ancient', 'magical', 'enchanted',
+      'golden', 'silver', 'misty', 'ethereal', 'serene', 'dramatic', 'mystical'
+    ];
+    const atmosphere = atmosphereKeywords.filter(mood => 
+      content.toLowerCase().includes(mood)
+    );
+    
+    // Build rich context description
+    let contextParts = [];
+    
+    if (potentialNames.length > 0) {
+      contextParts.push(`character ${potentialNames[0]}`);
+    }
+    
+    if (actions.length > 0) {
+      contextParts.push(`${actions[0]}ing`);
+    }
+    
+    if (locations.length > 0) {
+      contextParts.push(`a ${locations[0]}`);
+    }
+    
+    if (atmosphere.length > 0) {
+      contextParts.push(`${atmosphere[0]} atmosphere`);
+    }
+    
+    // Add choices context if available
+    if (choices && choices.length > 0) {
+      const choiceContext = choices.join(' ').toLowerCase();
+      const choiceLocations = locationKeywords.filter(loc => choiceContext.includes(loc));
+      const choiceActions = actionKeywords.filter(action => choiceContext.includes(action));
+      
+      if (choiceLocations.length > 0) {
+        contextParts.push(`with ${choiceLocations[0]}`);
+      }
+      if (choiceActions.length > 0) {
+        contextParts.push(`${choiceActions[0]} scene`);
+      }
+    }
+    
+    // Fallback if no specific context found
+    if (contextParts.length === 0) {
+      contextParts = ['fantasy story scene', 'magical atmosphere', 'peaceful setting'];
+    }
+    
+    return contextParts.join(', ');
   };
 
-  // Simulate AI image generation (replace with real API call)
+  // Generate background image using backend API
   const generateBackgroundImage = async (title, context) => {
-    // For demo, use Unsplash with context as search
-    const keywords = encodeURIComponent((title + ' ' + context).replace(/[^a-zA-Z0-9 ]/g, ' '));
-    // Use a random Unsplash image for now
-    return `https://source.unsplash.com/1600x900/?${keywords}`;
+    try {
+      console.log('🎨 Generating background image for:', { title, context, selectedStyle, selectedTheme });
+      console.log('🔗 API Base URL:', apiService.baseURL);
+      
+      // Test if backend is reachable
+      try {
+        await apiService.get('/story/styles');
+        console.log('✅ Backend is reachable');
+      } catch (testError) {
+        console.error('❌ Backend not reachable:', testError);
+        throw new Error('Backend not available');
+      }
+      
+      // Call backend story image generation API
+      const data = await apiService.post('/story/generate-image', {
+        story_content: context,
+        story_title: title || '',
+        style: selectedStyle || 'fantasy-art',
+        theme: selectedTheme || 'adventure'
+      });
+
+      console.log('✅ Backend response:', data);
+
+      if (data && data.image_url) {
+        console.log('🖼️ Using backend generated image:', data.image_url);
+        return data.image_url;
+      } else {
+        console.log('⚠️ No image URL from backend, using Unsplash fallback');
+        // Fallback to Unsplash
+        const keywords = encodeURIComponent((title + ' ' + context).replace(/[^a-zA-Z0-9 ]/g, ' ').substring(0, 100));
+        const fallbackUrl = `https://source.unsplash.com/1600x900/?${keywords}`;
+        console.log('🔄 Fallback image URL:', fallbackUrl);
+        return fallbackUrl;
+      }
+    } catch (error) {
+      console.error('❌ Error generating background image:', error);
+      // Don't show toast error for every image generation failure
+      // Fallback to Unsplash
+      const keywords = encodeURIComponent((title + ' ' + context).replace(/[^a-zA-Z0-9 ]/g, ' ').substring(0, 100));
+      const fallbackUrl = `https://source.unsplash.com/1600x900/?${keywords}`;
+      console.log('🔄 Error fallback image URL:', fallbackUrl);
+      return fallbackUrl;
+    }
   };
 
   // Generate AI response to user input
@@ -462,11 +571,13 @@ const StoryWeaver = ({ sessionId }) => {
 
   return (
     <div className="story-weaver" ref={containerRef} style={{
-      backgroundImage: backgroundImage ? `linear-gradient(rgba(0,0,0,0.45),rgba(0,0,0,0.45)), url('${backgroundImage}')` : undefined,
+      backgroundImage: backgroundImage ? `linear-gradient(rgba(0,0,0,0.05), rgba(0,0,0,0.05)), url('${backgroundImage}')` : 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
       backgroundSize: 'cover',
       backgroundPosition: 'center',
-      transition: 'background-image 0.5s',
+      backgroundRepeat: 'no-repeat',
+      transition: 'background-image 1s ease-in-out',
     }}>
+      
       <div className="story-weaver-header">
         <div className="header-content">
           <h2>Interactive Story Weaver</h2>

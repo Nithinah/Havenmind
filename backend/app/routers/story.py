@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks
 from sqlalchemy.orm import Session
 from sqlalchemy import func, desc
 from typing import List, Dict, Any, Optional
+from pydantic import BaseModel
 import logging
 
 from app.database import get_db
@@ -10,10 +11,18 @@ from app.models.sanctuary import (
     StoryCreate, StoryResponse
 )
 from app.services import story_service
+from app.services.image_generation_service import image_generation_service
 from app.config import settings
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/story", tags=["story"])
+
+# Request model for story image generation
+class StoryImageRequest(BaseModel):
+    story_content: str
+    story_title: str = ""
+    style: str = "fantasy-art"
+    theme: str = "adventure"
 
 @router.post("/generate", response_model=StoryResponse)
 async def generate_story(
@@ -56,6 +65,36 @@ async def generate_story(
         db.rollback()
         logger.error(f"Error generating story: {e}")
         raise HTTPException(status_code=500, detail="Failed to generate story")
+
+@router.post("/generate-image")
+async def generate_story_image(
+    image_request: StoryImageRequest,
+    db: Session = Depends(get_db)
+):
+    """Generate background image for story segment."""
+    try:
+        # Generate story-specific image
+        image_url = await image_generation_service.generate_story_image(
+            story_content=image_request.story_content,
+            story_title=image_request.story_title,
+            style=image_request.style,
+            theme=image_request.theme
+        )
+        
+        if not image_url:
+            logger.error("Failed to generate story image")
+            raise HTTPException(status_code=500, detail="Failed to generate image")
+        
+        return {
+            "image_url": image_url,
+            "status": "success",
+            "style": image_request.style,
+            "theme": image_request.theme
+        }
+        
+    except Exception as e:
+        logger.error(f"Error generating story image: {e}")
+        raise HTTPException(status_code=500, detail="Failed to generate story image")
 
 @router.get("/history/{session_id}", response_model=List[StoryResponse])
 async def get_story_history(
