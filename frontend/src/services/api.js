@@ -114,38 +114,58 @@ class ApiService {
   // HavenMind API methods
   
   // Sanctuary API
-  async getSanctuaryData() {
-    return this.get('/sanctuary');
+  async getSanctuaryElements(sessionId) {
+    return this.get(`/sanctuary/elements/${sessionId}`);
   }
 
-  async createSanctuary(data) {
-    return this.post('/sanctuary', data);
+  async createJournalEntry(entryData) {
+    return this.post('/sanctuary/journal-entry', entryData);
+  }
+
+  async getSanctuaryStats(sessionId) {
+    return this.get(`/sanctuary/stats/${sessionId}`);
+  }
+
+  async deleteElement(elementId) {
+    return this.delete(`/sanctuary/elements/${elementId}`);
   }
 
   // Story API
-  async getStories() {
-    return this.get('/story');
+  async getStoryHistory(sessionId, limit = 20, offset = 0) {
+    return this.get(`/story/history/${sessionId}?limit=${limit}&offset=${offset}`);
   }
 
-  async createStory(storyData) {
-    return this.post('/story', storyData);
+  async generateStory(storyData) {
+    return this.post('/story/generate', storyData);
   }
 
-  async getStoryById(id) {
-    return this.get(`/story/${id}`);
+  async getStoryStyles() {
+    return this.get('/story/styles');
+  }
+
+  async getStoryThemes() {
+    return this.get('/story/themes');
+  }
+
+  async getStoryRecommendation(sessionId) {
+    return this.get(`/story/recommend/${sessionId}`);
   }
 
   // Skills API
-  async getSkills() {
-    return this.get('/skills');
+  async getSkills(sessionId) {
+    return this.get(`/skills/${sessionId}`);
   }
 
-  async updateSkillProgress(skillId, progress) {
-    return this.put(`/skills/${skillId}/progress`, { progress });
+  async getSkillStats(sessionId) {
+    return this.get(`/skills/statistics/${sessionId}`);
   }
 
-  async getSkillById(id) {
-    return this.get(`/skills/${id}`);
+  async practiceSkill(practiceData) {
+    return this.post('/skills/practice', practiceData);
+  }
+
+  async getSkillGuidance(skillName, masteryLevel) {
+    return this.get(`/skills/guidance/${skillName}?mastery_level=${masteryLevel}`);
   }
 
   // Connection test

@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import './SanctuaryCanvas.css';
 
 const SanctuaryCanvas = ({ 
@@ -15,6 +15,8 @@ const SanctuaryCanvas = ({
   const [canvasSize, setCanvasSize] = useState({ width: 800, height: 600 });
   const [hoveredElement, setHoveredElement] = useState(null);
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
+  const [animatingElements, setAnimatingElements] = useState(new Set());
+  const [lastElementCount, setLastElementCount] = useState(0);
 
   // Emoji mappings for different element types
   const elementEmojis = {
@@ -38,7 +40,80 @@ const SanctuaryCanvas = ({
     default: '✨'
   };
 
-  // Initialize ambient particles - MOVED BEFORE useEffect
+  // Detect new elements and trigger animations
+  useEffect(() => {
+    if (elements.length > lastElementCount) {
+      console.log('🎨 New elements detected!', elements.length - lastElementCount);
+      
+      // Get the new elements (last N elements)
+      const newElementsCount = elements.length - lastElementCount;
+      const newElements = elements.slice(-newElementsCount);
+      
+      // Add new elements to animation set
+      setAnimatingElements(prev => {
+        const newSet = new Set(prev);
+        newElements.forEach(element => {
+          newSet.add(element.id);
+        });
+        return newSet;
+      });
+      
+      // Show celebration for new elements
+      if (newElementsCount > 0) {
+        showElementAddedCelebration(newElements);
+      }
+      
+      // Remove from animation set after animation completes
+      setTimeout(() => {
+        setAnimatingElements(prev => {
+          const newSet = new Set(prev);
+          newElements.forEach(element => {
+            newSet.delete(element.id);
+          });
+          return newSet;
+        });
+      }, 2000);
+    }
+    
+    setLastElementCount(elements.length);
+  }, [elements.length, lastElementCount]);
+
+  // Show celebration effect for new elements
+  const showElementAddedCelebration = (newElements) => {
+    console.log('🎉 Showing celebration for new elements:', newElements);
+    
+    // Create celebration particles
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    
+    newElements.forEach((element, index) => {
+      setTimeout(() => {
+        createCelebrationEffect(element.x_position, element.y_position);
+      }, index * 300);
+    });
+  };
+
+  // Create celebration particle effect
+  const createCelebrationEffect = (x, y) => {
+    const celebrationParticles = [];
+    for (let i = 0; i < 8; i++) {
+      celebrationParticles.push({
+        x: x,
+        y: y,
+        vx: (Math.random() - 0.5) * 4,
+        vy: (Math.random() - 0.5) * 4,
+        life: 1,
+        decay: 0.02,
+        size: Math.random() * 4 + 2,
+        color: `hsl(${Math.random() * 60 + 280}, 70%, 70%)`
+      });
+    }
+    
+    // Add to particles for rendering
+    particlesRef.current.push(...celebrationParticles);
+  };
+
+  // Initialize ambient particles
   const initializeParticles = useCallback(() => {
     particlesRef.current = [];
     for (let i = 0; i < 20; i++) {
@@ -49,12 +124,14 @@ const SanctuaryCanvas = ({
         vy: (Math.random() - 0.5) * 0.5,
         size: Math.random() * 2 + 1,
         opacity: Math.random() * 0.3 + 0.1,
-        color: `hsl(${Math.random() * 60 + 200}, 50%, 70%)`
+        color: `hsl(${Math.random() * 60 + 200}, 50%, 70%)`,
+        life: 1, // Permanent particles
+        type: 'ambient'
       });
     }
   }, [canvasSize.width, canvasSize.height]);
 
-  // Main drawing function - MOVED BEFORE useEffect
+  // Main drawing function
   const draw = useCallback(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -65,12 +142,13 @@ const SanctuaryCanvas = ({
     // Draw background gradient
     drawBackground(ctx);
 
-    // Draw ambient particles
+    // Draw and update particles
     drawParticles(ctx);
 
-    // Draw sanctuary elements
+    // Draw sanctuary elements with animation states
     elements.forEach((element, index) => {
-      drawSanctuaryElement(ctx, element, index);
+      const isAnimating = animatingElements.has(element.id);
+      drawSanctuaryElement(ctx, element, index, isAnimating);
     });
 
     // Draw hover effects
@@ -80,7 +158,7 @@ const SanctuaryCanvas = ({
 
     // Draw cursor effect
     drawCursorEffect(ctx);
-  }, [elements, hoveredElement, mousePos, canvasSize]);
+  }, [elements, hoveredElement, mousePos, canvasSize, animatingElements]);
 
   // Initialize canvas and particles
   useEffect(() => {
@@ -128,19 +206,20 @@ const SanctuaryCanvas = ({
   }, [draw]);
 
   const drawBackground = (ctx) => {
-    // Gradient background
+    // Dynamic gradient based on number of elements
+    const intensity = Math.min(elements.length / 10, 1);
     const gradient = ctx.createRadialGradient(
       canvasSize.width / 2, canvasSize.height / 2, 0,
       canvasSize.width / 2, canvasSize.height / 2, canvasSize.width / 2
     );
-    gradient.addColorStop(0, 'rgba(255, 255, 255, 0.1)');
-    gradient.addColorStop(1, 'rgba(255, 255, 255, 0.05)');
+    gradient.addColorStop(0, `rgba(255, 255, 255, ${0.1 + intensity * 0.1})`);
+    gradient.addColorStop(1, `rgba(255, 255, 255, ${0.05 + intensity * 0.05})`);
 
     ctx.fillStyle = gradient;
     ctx.fillRect(0, 0, canvasSize.width, canvasSize.height);
 
-    // Draw subtle grid
-    ctx.strokeStyle = 'rgba(255, 255, 255, 0.05)';
+    // Draw subtle grid that becomes more visible with more elements
+    ctx.strokeStyle = `rgba(255, 255, 255, ${0.05 + intensity * 0.05})`;
     ctx.lineWidth = 1;
     const gridSize = 50;
 
@@ -160,45 +239,70 @@ const SanctuaryCanvas = ({
   };
 
   const drawParticles = (ctx) => {
-    particlesRef.current.forEach(particle => {
+    // Update and draw particles
+    particlesRef.current = particlesRef.current.filter(particle => {
       // Update particle position
       particle.x += particle.vx;
       particle.y += particle.vy;
 
-      // Wrap around edges
-      if (particle.x < 0) particle.x = canvasSize.width;
-      if (particle.x > canvasSize.width) particle.x = 0;
-      if (particle.y < 0) particle.y = canvasSize.height;
-      if (particle.y > canvasSize.height) particle.y = 0;
+      // Update life for temporary particles
+      if (particle.life !== undefined && particle.life < 1) {
+        particle.life -= particle.decay || 0.02;
+        if (particle.life <= 0) return false; // Remove dead particles
+      }
+
+      // Wrap around edges for ambient particles
+      if (particle.type === 'ambient') {
+        if (particle.x < 0) particle.x = canvasSize.width;
+        if (particle.x > canvasSize.width) particle.x = 0;
+        if (particle.y < 0) particle.y = canvasSize.height;
+        if (particle.y > canvasSize.height) particle.y = 0;
+      }
 
       // Draw particle
       ctx.save();
-      ctx.globalAlpha = particle.opacity;
+      const alpha = particle.life !== undefined ? particle.life * (particle.opacity || 1) : particle.opacity;
+      ctx.globalAlpha = alpha;
       ctx.fillStyle = particle.color;
       ctx.beginPath();
       ctx.arc(particle.x, particle.y, particle.size, 0, Math.PI * 2);
       ctx.fill();
       ctx.restore();
+
+      return true; // Keep particle
     });
   };
 
-  const drawSanctuaryElement = (ctx, element, index) => {
+  const drawSanctuaryElement = (ctx, element, index, isAnimating = false) => {
     const { x_position, y_position, size, color, element_type, image_url } = element;
     const time = Date.now() * 0.001;
     
+    // Enhanced animation for new elements
+    let currentSize = size * 40;
+    let glowIntensity = 0.3;
+    let pulseMultiplier = 1;
+    
+    if (isAnimating) {
+      // Growing animation for new elements
+      const animationProgress = Math.min((Date.now() % 2000) / 2000, 1);
+      currentSize = size * 40 * (0.1 + 0.9 * easeOutBounce(animationProgress));
+      glowIntensity = 0.8 * (1 - animationProgress);
+      pulseMultiplier = 1.5 - 0.5 * animationProgress;
+    }
+    
     // Element pulsing animation based on sentiment
-    const pulseIntensity = Math.abs(element.sentiment_score) * 0.3 + 0.7;
-    const currentSize = size * (40 + 10 * Math.sin(time + index) * pulseIntensity);
+    const pulseIntensity = Math.abs(element.sentiment_score || 0) * 0.3 + 0.7;
+    currentSize *= (1 + 0.1 * Math.sin(time + index) * pulseIntensity * pulseMultiplier);
 
     ctx.save();
 
-    // Draw glow effect
-    const glowSize = currentSize * 1.5;
+    // Enhanced glow effect for new elements
+    const glowSize = currentSize * (1.5 + glowIntensity);
     const gradient = ctx.createRadialGradient(
       x_position, y_position, 0,
       x_position, y_position, glowSize
     );
-    gradient.addColorStop(0, `${color}40`);
+    gradient.addColorStop(0, `${color}${Math.floor((0.4 + glowIntensity) * 255).toString(16).padStart(2, '0')}`);
     gradient.addColorStop(1, `${color}00`);
     
     ctx.fillStyle = gradient;
@@ -209,11 +313,11 @@ const SanctuaryCanvas = ({
       glowSize * 2
     );
 
-    // Draw main circular element with pop-like appearance
+    // Draw main circular element with enhanced pop appearance
     ctx.beginPath();
     ctx.arc(x_position, y_position, currentSize / 2, 0, Math.PI * 2);
     
-    // Create pop-like gradient
+    // Create enhanced pop-like gradient
     const popGradient = ctx.createRadialGradient(
       x_position - currentSize * 0.2, 
       y_position - currentSize * 0.2, 
@@ -222,61 +326,46 @@ const SanctuaryCanvas = ({
       y_position, 
       currentSize / 2
     );
-    popGradient.addColorStop(0, 'rgba(255, 255, 255, 0.8)');
-    popGradient.addColorStop(0.3, color + 'CC');
+    popGradient.addColorStop(0, 'rgba(255, 255, 255, 0.9)');
+    popGradient.addColorStop(0.3, color + 'DD');
     popGradient.addColorStop(1, color);
     
     ctx.fillStyle = popGradient;
     ctx.fill();
 
-    // Draw element border with rounded appearance
-    ctx.strokeStyle = color;
-    ctx.lineWidth = 3;
+    // Enhanced border for new elements
+    ctx.strokeStyle = isAnimating ? '#ffffff' : color;
+    ctx.lineWidth = isAnimating ? 4 : 3;
     ctx.globalAlpha = 0.9;
     ctx.stroke();
 
-    // Draw emoji in the center
+    // Draw emoji in the center with scale animation
     const emoji = elementEmojis[element_type] || elementEmojis.default;
     ctx.globalAlpha = 1;
-    ctx.font = `${Math.max(16, currentSize * 0.4)}px Arial`;
+    const fontSize = Math.max(16, currentSize * 0.4);
+    ctx.font = `${fontSize}px Arial`;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     
-    // Add text shadow for better visibility
-    ctx.shadowColor = 'rgba(0, 0, 0, 0.3)';
-    ctx.shadowBlur = 4;
-    ctx.shadowOffsetX = 1;
-    ctx.shadowOffsetY = 1;
+    // Enhanced text shadow for visibility
+    ctx.shadowColor = 'rgba(0, 0, 0, 0.5)';
+    ctx.shadowBlur = isAnimating ? 8 : 4;
+    ctx.shadowOffsetX = 2;
+    ctx.shadowOffsetY = 2;
     
     ctx.fillStyle = '#ffffff';
     ctx.fillText(emoji, x_position, y_position);
+    
+    // Sparkle effect for new elements
+    if (isAnimating) {
+      drawSparkles(ctx, x_position, y_position, currentSize, time);
+    }
     
     // Reset shadow
     ctx.shadowColor = 'transparent';
     ctx.shadowBlur = 0;
     ctx.shadowOffsetX = 0;
     ctx.shadowOffsetY = 0;
-
-    // If there's an AI-generated image, draw it as overlay (optional)
-    if (image_url && image_url.startsWith('data:image')) {
-      const img = new Image();
-      img.onload = () => {
-        ctx.save();
-        ctx.globalAlpha = 0.3; // Make it subtle
-        ctx.beginPath();
-        ctx.arc(x_position, y_position, currentSize / 2, 0, Math.PI * 2);
-        ctx.clip();
-        ctx.drawImage(
-          img,
-          x_position - currentSize / 2,
-          y_position - currentSize / 2,
-          currentSize,
-          currentSize
-        );
-        ctx.restore();
-      };
-      img.src = image_url;
-    }
 
     ctx.restore();
 
@@ -290,6 +379,51 @@ const SanctuaryCanvas = ({
       centerY: y_position,
       radius: currentSize / 2
     };
+  };
+
+  // Easing function for smooth animations
+  const easeOutBounce = (t) => {
+    if (t < 1 / 2.75) {
+      return 7.5625 * t * t;
+    } else if (t < 2 / 2.75) {
+      return 7.5625 * (t -= 1.5 / 2.75) * t + 0.75;
+    } else if (t < 2.5 / 2.75) {
+      return 7.5625 * (t -= 2.25 / 2.75) * t + 0.9375;
+    } else {
+      return 7.5625 * (t -= 2.625 / 2.75) * t + 0.984375;
+    }
+  };
+
+  // Draw sparkle effect for new elements
+  const drawSparkles = (ctx, centerX, centerY, size, time) => {
+    const sparkleCount = 6;
+    for (let i = 0; i < sparkleCount; i++) {
+      const angle = (i / sparkleCount) * Math.PI * 2 + time * 2;
+      const distance = size * 0.7;
+      const x = centerX + Math.cos(angle) * distance;
+      const y = centerY + Math.sin(angle) * distance;
+      const sparkleSize = 3 + Math.sin(time * 3 + i) * 2;
+      
+      ctx.save();
+      ctx.globalAlpha = 0.8;
+      ctx.fillStyle = '#ffffff';
+      ctx.strokeStyle = '#ffd700';
+      ctx.lineWidth = 1;
+      
+      // Draw star shape
+      ctx.beginPath();
+      for (let j = 0; j < 4; j++) {
+        const starAngle = (j / 4) * Math.PI * 2;
+        const starX = x + Math.cos(starAngle) * sparkleSize;
+        const starY = y + Math.sin(starAngle) * sparkleSize;
+        if (j === 0) ctx.moveTo(starX, starY);
+        else ctx.lineTo(starX, starY);
+      }
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+      ctx.restore();
+    }
   };
 
   const drawHoverEffect = (ctx, element) => {
@@ -422,6 +556,32 @@ const SanctuaryCanvas = ({
           </div>
         </motion.div>
       )}
+
+      {/* Real-time element count display */}
+      <AnimatePresence>
+        {elements.length > 0 && (
+          <motion.div
+            className="element-counter"
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 1, scale: 1 }}
+            style={{
+              position: 'absolute',
+              top: '20px',
+              left: '20px',
+              background: 'rgba(255, 255, 255, 0.1)',
+              backdropFilter: 'blur(10px)',
+              borderRadius: '20px',
+              padding: '8px 16px',
+              color: 'white',
+              fontSize: '14px',
+              fontWeight: '600',
+              border: '1px solid rgba(255, 255, 255, 0.2)'
+            }}
+          >
+            🌸 {elements.length} elements growing
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };

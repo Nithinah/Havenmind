@@ -36,7 +36,7 @@ const EmotionInput = ({ sessionId }) => {
     const textarea = textareaRef.current;
     if (textarea) {
       textarea.style.height = 'auto';
-      textarea.style.height = textarea.scrollHeight + 'px';  // Removed the limit
+      textarea.style.height = textarea.scrollHeight + 'px';
     }
   }, [journalText]);
 
@@ -56,18 +56,41 @@ const EmotionInput = ({ sessionId }) => {
     setIsSubmitting(true);
     
     try {
+      console.log('📝 Submitting journal entry...');
+      
+      // Show immediate feedback
+      const loadingToast = toast.loading('Processing your thoughts...');
+      
       await createJournalEntry({
         content: journalText.trim(),
         session_id: sessionId
       });
       
-      toast.success('Your thoughts have been added to your sanctuary');
+      // Dismiss loading toast
+      toast.dismiss(loadingToast);
+      
+      // Success feedback
+      toast.success('✨ Your sanctuary is growing! New elements have been added.', {
+        duration: 4000,
+        icon: '🌱'
+      });
+      
+      // Clear form immediately
       setJournalText('');
       setShowPrompts(false);
       
+      // Focus back to textarea for next entry
+      setTimeout(() => {
+        textareaRef.current?.focus();
+      }, 100);
+      
+      console.log('✅ Journal entry submitted successfully');
+      
     } catch (error) {
-      console.error('Error submitting journal entry:', error);
-      toast.error('Unable to process your entry right now. Please try again.');
+      console.error('❌ Error submitting journal entry:', error);
+      toast.error('Unable to process your entry right now. Please try again.', {
+        duration: 5000
+      });
     } finally {
       setIsSubmitting(false);
     }
@@ -77,6 +100,14 @@ const EmotionInput = ({ sessionId }) => {
     setJournalText(prompt);
     setShowPrompts(false);
     textareaRef.current?.focus();
+    
+    // Position cursor at end
+    setTimeout(() => {
+      if (textareaRef.current) {
+        const textarea = textareaRef.current;
+        textarea.setSelectionRange(textarea.value.length, textarea.value.length);
+      }
+    }, 50);
   };
 
   const getCharacterCountColor = () => {
@@ -94,7 +125,7 @@ const EmotionInput = ({ sessionId }) => {
             ref={textareaRef}
             value={journalText}
             onChange={(e) => setJournalText(e.target.value)}
-            placeholder="Share what's on your mind and heart... Every thought and feeling is welcome in your sanctuary."
+            placeholder="Share what's on your mind and heart... Every thought and feeling is welcome in your sanctuary. 🌸"
             className="journal-textarea"
             disabled={isSubmitting}
             maxLength={maxLength}
@@ -102,7 +133,7 @@ const EmotionInput = ({ sessionId }) => {
           />
           
           <div className="textarea-overlay">
-            {journalText.trim().length === 0 && (
+            {journalText.trim().length === 0 && !isSubmitting && (
               <motion.button
                 type="button"
                 className="prompts-trigger"
@@ -135,22 +166,27 @@ const EmotionInput = ({ sessionId }) => {
             type="submit"
             className="submit-button"
             disabled={!journalText.trim() || isSubmitting || journalText.length > maxLength}
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
+            whileHover={{ scale: isSubmitting ? 1 : 1.02 }}
+            whileTap={{ scale: isSubmitting ? 1 : 0.98 }}
           >
             {isSubmitting ? (
-              <Loader size={16} className="spin" />
+              <>
+                <Loader size={16} className="spin" />
+                <span>Growing sanctuary...</span>
+              </>
             ) : (
-              <Send size={16} />
+              <>
+                <Send size={16} />
+                <span>Share & Grow</span>
+              </>
             )}
-            <span>{isSubmitting ? 'Creating...' : 'Share'}</span>
           </motion.button>
         </div>
       </form>
 
       {/* Journal Prompts */}
       <AnimatePresence>
-        {showPrompts && (
+        {showPrompts && !isSubmitting && (
           <motion.div
             className="prompts-container"
             initial={{ opacity: 0, height: 0 }}
@@ -195,7 +231,7 @@ const EmotionInput = ({ sessionId }) => {
 
       {/* Encouraging messages */}
       <AnimatePresence>
-        {journalText.length > 0 && journalText.length < 50 && (
+        {journalText.length > 0 && journalText.length < 50 && !isSubmitting && (
           <motion.div
             className="encouragement"
             initial={{ opacity: 0, y: -10 }}
@@ -208,7 +244,7 @@ const EmotionInput = ({ sessionId }) => {
       </AnimatePresence>
 
       <AnimatePresence>
-        {journalText.length > 200 && (
+        {journalText.length > 200 && !isSubmitting && (
           <motion.div
             className="encouragement positive"
             initial={{ opacity: 0, y: -10 }}
@@ -216,6 +252,26 @@ const EmotionInput = ({ sessionId }) => {
             exit={{ opacity: 0, y: -10 }}
           >
             Beautiful reflection! Your sanctuary is growing 🌱
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Real-time feedback during submission */}
+      <AnimatePresence>
+        {isSubmitting && (
+          <motion.div
+            className="encouragement processing"
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.9 }}
+            style={{
+              background: 'rgba(99, 102, 241, 0.1)',
+              borderColor: 'rgba(99, 102, 241, 0.3)',
+              color: '#6366f1'
+            }}
+          >
+            <Sparkles size={14} className="spin" style={{ marginRight: '8px' }} />
+            Creating beautiful elements from your thoughts...
           </motion.div>
         )}
       </AnimatePresence>
