@@ -4,8 +4,8 @@
   display: flex;
   flex-direction: column;
   height: 100vh;
-  background: rgba(255, 255, 255, 0.05);
-  backdrop-filter: blur(10px);
+  /* background: rgba(255, 255, 255, 0.05); - removed to allow dynamic background images */
+  backdrop-filter: blur(3px); /* reduced blur to make background more visible */
   border-radius: 16px;
   margin: 20px;
   overflow: hidden;
