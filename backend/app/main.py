@@ -4,14 +4,15 @@ from fastapi.responses import JSONResponse
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
 import logging
 import uvicorn
+import os
 
 from app.config import settings
 from app.database import init_db
 from app.routers import sanctuary_router, story_router, skills_router
 
-# Configure logging
+# Configure logging for Render
 logging.basicConfig(
-    level=logging.INFO if not settings.DEBUG else logging.DEBUG,
+    level=logging.INFO,  # Use INFO level for production
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
 logger = logging.getLogger(__name__)
@@ -21,15 +22,15 @@ app = FastAPI(
     title="HavenMind API",
     description="Therapeutic sanctuary application with AI-powered emotional support",
     version="1.0.0",
-    docs_url="/docs" if settings.DEBUG else None,
-    redoc_url="/redoc" if settings.DEBUG else None
+    docs_url="/docs",  # Always enable docs for Render
+    redoc_url="/redoc"
 )
 
-# Enhanced CORS configuration - This fixes the OPTIONS 400 Bad Request errors
+# Render-optimized CORS configuration
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=settings.CORS_ORIGINS + ["http://localhost:3001", "http://127.0.0.1:3001"],  # Added frontend port
-    allow_credentials=False,  # Changed to False since we're not using credentials
+    allow_origins=settings.cors_origins + ["*"] if settings.DEBUG else settings.cors_origins,
+    allow_credentials=False,
     allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS", "HEAD", "PATCH"],
     allow_headers=[
         "Accept",
@@ -43,13 +44,20 @@ app.add_middleware(
         "Access-Control-Request-Headers",
     ],
     expose_headers=["*"],
-    max_age=86400,  # Cache preflight requests for 24 hours
+    max_age=86400,
 )
 
-# Add trusted host middleware for security
+# Render-compatible trusted host middleware
+render_hosts = ["localhost", "127.0.0.1", "0.0.0.0"]
+if settings.RENDER_ENVIRONMENT:
+    render_hosts.extend([
+        "*.onrender.com",
+        "*.render.com"
+    ])
+
 app.add_middleware(
     TrustedHostMiddleware,
-    allowed_hosts=["localhost", "127.0.0.1", "0.0.0.0"] if settings.DEBUG else ["yourdomain.com"]
+    allowed_hosts=render_hosts if settings.DEBUG or settings.RENDER_ENVIRONMENT else ["yourdomain.com"]
 )
 
 # Include routers
@@ -61,16 +69,27 @@ app.include_router(skills_router)
 async def startup_event():
     """Initialize database and services on startup."""
     try:
-        logger.info("Initializing HavenMind API...")
+        logger.info("🚀 Initializing HavenMind API on Render...")
+        
+        # Log environment info
+        logger.info(f"Environment: {'Render Production' if settings.RENDER_ENVIRONMENT else 'Local Development'}")
+        logger.info(f"Port: {settings.PORT}")
+        logger.info(f"Debug mode: {settings.DEBUG}")
         
         # Initialize database
-        init_db()
-        logger.info("Database initialized successfully")
+        try:
+            init_db()
+            logger.info("✅ Database initialized successfully")
+        except Exception as db_error:
+            logger.error(f"❌ Database initialization failed: {db_error}")
+            if not settings.RENDER_ENVIRONMENT:
+                raise  # Fail locally, but continue on Render
         
-        # Log configuration
-        logger.info(f"Debug mode: {settings.DEBUG}")
-        logger.info(f"Database: {settings.DATABASE_URL}")
-        logger.info(f"CORS origins: {settings.CORS_ORIGINS}")
+        # Log database info
+        if "postgresql://" in settings.database_url:
+            logger.info("📊 Database: PostgreSQL (Render)")
+        else:
+            logger.info("📊 Database: SQLite (Local)")
         
         # Check API keys
         api_keys_status = {
@@ -80,19 +99,20 @@ async def startup_event():
         }
         
         for service, available in api_keys_status.items():
-            status = "✓ Available" if available else "✗ Missing"
+            status = "✅ Available" if available else "⚠️ Missing"
             logger.info(f"{service} API Key: {status}")
         
-        logger.info("HavenMind API startup complete!")
+        logger.info("🎉 HavenMind API startup complete!")
         
     except Exception as e:
-        logger.error(f"Startup failed: {e}")
-        raise
+        logger.error(f"💥 Startup failed: {e}")
+        if not settings.RENDER_ENVIRONMENT:
+            raise
 
 @app.on_event("shutdown") 
 async def shutdown_event():
     """Cleanup on shutdown."""
-    logger.info("HavenMind API shutting down...")
+    logger.info("🛑 HavenMind API shutting down...")
 
 @app.exception_handler(Exception)
 async def global_exception_handler(request, exc):
@@ -119,11 +139,9 @@ async def add_cors_headers(request, call_next):
     
     # Add CORS headers to all responses
     origin = request.headers.get("origin")
-    if origin and (origin in settings.CORS_ORIGINS or 
-                  origin in ["http://localhost:3001", "http://127.0.0.1:3001"] or
-                  settings.DEBUG):
+    if origin and (origin in settings.cors_origins or settings.DEBUG):
         response.headers["Access-Control-Allow-Origin"] = origin
-    elif settings.DEBUG:
+    elif settings.DEBUG or settings.RENDER_ENVIRONMENT:
         response.headers["Access-Control-Allow-Origin"] = "*"
     
     response.headers["Access-Control-Allow-Credentials"] = "false"
@@ -141,7 +159,7 @@ async def handle_options(path: str):
         status_code=200,
         content={},
         headers={
-            "Access-Control-Allow-Origin": "*" if settings.DEBUG else "null",
+            "Access-Control-Allow-Origin": "*",
             "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS, HEAD, PATCH",
             "Access-Control-Allow-Headers": "*",
             "Access-Control-Max-Age": "86400",
@@ -156,11 +174,13 @@ async def root():
         "version": "1.0.0",
         "description": "Therapeutic sanctuary application with AI-powered emotional support",
         "status": "healthy",
+        "platform": "Render" if settings.RENDER_ENVIRONMENT else "Local",
+        "environment": "production" if settings.RENDER_ENVIRONMENT else "development",
         "endpoints": {
             "sanctuary": "/sanctuary",
             "story": "/story", 
             "skills": "/skills",
-            "docs": "/docs" if settings.DEBUG else "disabled",
+            "docs": "/docs",
             "health": "/health"
         }
     }
@@ -169,12 +189,17 @@ async def root():
 async def health_check():
     """Health check endpoint."""
     try:
-        from app.database import engine
-        from sqlalchemy import text
-        
         # Test database connection
-        with engine.connect() as conn:
-            conn.execute(text("SELECT 1"))
+        db_status = "unknown"
+        try:
+            from app.database import engine
+            from sqlalchemy import text
+            with engine.connect() as conn:
+                conn.execute(text("SELECT 1"))
+            db_status = "connected"
+        except Exception as e:
+            logger.warning(f"Database health check failed: {e}")
+            db_status = "disconnected"
         
         # Check API keys
         api_status = {
@@ -185,9 +210,12 @@ async def health_check():
         
         return {
             "status": "healthy",
-            "database": "connected",
+            "platform": "Render" if settings.RENDER_ENVIRONMENT else "Local",
+            "database": db_status,
+            "database_type": "PostgreSQL" if "postgresql://" in settings.database_url else "SQLite",
             "api_services": api_status,
-            "timestamp": "2024-01-01T00:00:00Z"
+            "port": settings.PORT,
+            "cors_origins": len(settings.cors_origins)
         }
         
     except Exception as e:
@@ -195,10 +223,12 @@ async def health_check():
         raise HTTPException(status_code=503, detail="Service unhealthy")
 
 if __name__ == "__main__":
+    logger.info(f"🚀 Starting HavenMind API on {settings.HOST}:{settings.PORT}")
+    
     uvicorn.run(
         "app.main:app",
         host=settings.HOST,
         port=settings.PORT,
-        reload=settings.DEBUG,
-        log_level="debug" if settings.DEBUG else "info"
+        reload=settings.DEBUG and not settings.RENDER_ENVIRONMENT,  # No reload on Render
+        log_level="info"
     )
